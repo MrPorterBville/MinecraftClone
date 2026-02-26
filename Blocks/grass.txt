@@ -1,0 +1,7 @@
+name=grass
+solid=true
+color=0.20,0.66,0.20
+texture=grass.png
+texture_top=grass_top.png
+texture_side=grass.png
+texture_bottom=dirt.png

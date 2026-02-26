@@ -1,0 +1,4 @@
+name=stone
+solid=true
+color=0.50,0.50,0.52
+texture=stone.png

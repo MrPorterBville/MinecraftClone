@@ -1,19 +1,25 @@
 import pyglet
+from typing import Protocol
 
-from engine.constants import SECTOR_SIZE, SOLID_BLOCKS, Vec3
+from engine.blocks import SOLID_BLOCKS
+from engine.constants import SECTOR_SIZE, Vec3
 from engine.graphics.block_renderer import BlockRenderer
 from engine.world.terrain import TerrainGenerator
 
 
+class Deletable(Protocol):
+    def delete(self) -> None: ...
+
+
 class World:
-    def __init__(self, seed: int = 1337) -> None:
+    def __init__(self, seed: int = 1337, flat_height: int = 8) -> None:
         self.seed = seed
         self.blocks: dict[Vec3, str] = {}
-        self._shown: dict[Vec3, pyglet.graphics.vertexdomain.VertexList] = {}
+        self._shown: dict[Vec3, Deletable] = {}
         self.batch = pyglet.graphics.Batch()
-        self.group = pyglet.graphics.Group()
-        self.terrain = TerrainGenerator(seed)
+        self.terrain = TerrainGenerator(seed, flat_height=flat_height)
         self.renderer = BlockRenderer(seed)
+        self.group = pyglet.graphics.ShaderGroup(program=self.renderer.shader)
 
     @staticmethod
     def normalize(position: tuple[float, float, float]) -> Vec3:
@@ -34,28 +40,13 @@ class World:
                 h = self.height_at(x, z)
                 for y in range(-4, h + 1):
                     if y == h:
-                        block = "sand" if h < 7 else "grass"
-                    elif y > h - 3:
+                        block = "grass"
+                    elif y >= h - 2:
                         block = "dirt"
                     else:
                         block = "stone"
                     self.add_block((x, y, z), block, immediate=False)
-                if h < 6:
-                    for y in range(h + 1, 7):
-                        self.add_block((x, y, z), "water", immediate=False)
-                if self.terrain.should_place_tree(x, z, h):
-                    self._generate_tree(x, h + 1, z)
         self.rebuild_visible()
-
-    def _generate_tree(self, x: int, y: int, z: int) -> None:
-        trunk_h = self.terrain.tree_height(x, y, z)
-        for dy in range(trunk_h):
-            self.add_block((x, y + dy, z), "wood", immediate=False)
-        for lx in range(-2, 3):
-            for lz in range(-2, 3):
-                for ly in range(trunk_h - 2, trunk_h + 1):
-                    if abs(lx) + abs(lz) + abs(ly - trunk_h) <= 4:
-                        self.add_block((x + lx, y + ly, z + lz), "leaf", immediate=False)
 
     def add_block(self, position: Vec3, block: str, immediate: bool = True) -> None:
         self.blocks[position] = block

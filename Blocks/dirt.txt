@@ -1,0 +1,4 @@
+name=dirt
+solid=true
+color=0.50,0.35,0.20
+texture=dirt.png
