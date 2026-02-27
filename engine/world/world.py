@@ -372,8 +372,7 @@ class World:
     def height_at(self, x: int, z: int) -> int:
         return max(1, min(self.WORLD_HEIGHT - 1, self.terrain.height_at(x, z)))
 
-    def _base_block_at(self, x: int, y: int, z: int) -> str | None:
-        h = self.height_at(x, z)
+    def _base_block_at(self, x: int, y: int, z: int, h: int) -> str | None:
         if y < self.BEDROCK_Y or y > h:
             return None
         if y == self.BEDROCK_Y:
@@ -396,7 +395,7 @@ class World:
             for z in range(z0, z1):
                 h = self.height_at(x, z)
                 for y in range(self.BEDROCK_Y, h + 1):
-                    block = self._base_block_at(x, y, z)
+                    block = self._base_block_at(x, y, z, h)
                     if block is not None:
                         data.append(((x, y, z), block))
         return data
