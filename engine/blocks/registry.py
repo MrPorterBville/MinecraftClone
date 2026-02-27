@@ -8,6 +8,7 @@ from pathlib import Path
 class BlockDefinition:
     name: str
     solid: bool
+    breakable: bool
     color: tuple[float, float, float]
     texture: str | None
     texture_top: str | None
@@ -49,6 +50,7 @@ def _load_block_file(path: Path) -> BlockDefinition:
 
     name = data.get("name", path.stem)
     solid = _parse_bool(data.get("solid", "true"))
+    breakable = _parse_bool(data.get("breakable", "true"))
     color = _parse_color(data.get("color", "1.0,0.0,1.0"))
     texture = data.get("texture")
     texture_top = data.get("texture_top")
@@ -58,6 +60,7 @@ def _load_block_file(path: Path) -> BlockDefinition:
     return BlockDefinition(
         name=name,
         solid=solid,
+        breakable=breakable,
         color=color,
         texture=texture,
         texture_top=texture_top,
