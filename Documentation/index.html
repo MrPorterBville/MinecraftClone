@@ -10,7 +10,7 @@
   <header class="topbar">
     <div>
       <h1>MinecraftClone Documentation</h1>
-      <p class="subtitle">A beginner-friendly guide to understanding, running, and extending this Python voxel project.</p>
+      <p class="subtitle">Comprehensive developer handbook for students: architecture, mechanics, rendering, performance, and extension workflows.</p>
     </div>
     <label class="search-wrap" for="doc-search">
       <span>Search docs</span>
@@ -20,239 +20,385 @@
 
   <main class="layout">
     <nav class="sidebar" aria-label="Documentation sections">
-      <a href="#quick-start">Quick Start</a>
-      <a href="#project-map">Project Map</a>
-      <a href="#how-game-runs">How the Game Runs</a>
-      <a href="#module-guide">Module Guide</a>
-      <a href="#controls">Controls</a>
-      <a href="#blocks">Blocks & Textures</a>
-      <a href="#data-flow">Data Flow</a>
-      <a href="#performance">Performance & Profiling</a>
-      <a href="#troubleshooting">Troubleshooting</a>
-      <a href="#learning-path">Learning Path</a>
-      <a href="#faq">FAQ</a>
-      <a href="#glossary">Glossary</a>
+      <a href="#getting-started">1) Getting Started</a>
+      <a href="#project-orientation">2) Project Orientation</a>
+      <a href="#runtime-lifecycle">3) Runtime Lifecycle</a>
+      <a href="#gameplay-mechanics">4) Gameplay Mechanics</a>
+      <a href="#world-and-chunks">5) World & Chunk System</a>
+      <a href="#rendering-pipeline">6) Rendering Pipeline</a>
+      <a href="#block-system">7) Block System</a>
+      <a href="#inventory-system">8) Inventory System</a>
+      <a href="#input-reference">9) Controls & Input Reference</a>
+      <a href="#modification-guides">10) Modification Guides</a>
+      <a href="#performance-profiling">11) Performance & Profiling</a>
+      <a href="#debugging">12) Debugging & Troubleshooting</a>
+      <a href="#code-reading-roadmap">13) Code Reading Roadmap</a>
+      <a href="#faq">14) FAQ</a>
+      <a href="#glossary">15) Glossary</a>
     </nav>
 
     <section class="content" id="docs-content">
-      <article class="doc-card" id="quick-start" data-title="Quick Start">
-        <h2>Quick Start</h2>
+      <article class="doc-card" id="getting-started" data-title="Getting Started">
+        <h2>1) Getting Started: Install, Run, and Verify</h2>
+        <p>This project is a Python + pyglet voxel game. If you are brand new, follow this exact checklist in order.</p>
         <ol>
-          <li>Open a terminal in this repository folder.</li>
-          <li>Create and activate a virtual environment.</li>
-          <li>Install dependencies from <code>requirements.txt</code>.</li>
-          <li>Run the game with <code>python minecraft_clone.py</code> or <code>python main.py</code>.</li>
+          <li>Open a terminal in the repository root.</li>
+          <li>Create a Python virtual environment.</li>
+          <li>Activate it and install dependencies.</li>
+          <li>Run the game and confirm a window appears with terrain + crosshair.</li>
         </ol>
         <pre><code>python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-python minecraft_clone.py</code></pre>
-        <p>You can also run with a specific terrain seed:</p>
+python main.py</code></pre>
+        <p>Alternative launcher (same game behavior):</p>
+        <pre><code>python minecraft_clone.py</code></pre>
+        <p>Run with explicit deterministic terrain seed:</p>
         <pre><code>python main.py --seed 12345</code></pre>
-      </article>
-
-      <article class="doc-card" id="project-map" data-title="Project Map">
-        <h2>Project Map (What each folder does)</h2>
+        <p>Optional experimental meshing mode (may be faster, may produce UV artifacts on some GPUs/drivers):</p>
+        <pre><code>python main.py --use-texture-array</code></pre>
+        <h3>What "success" looks like</h3>
         <ul>
-          <li><code>main.py</code>: Entry point that creates the window and starts the game loop.</li>
-          <li><code>minecraft_clone.py</code>: Tiny launcher that calls <code>main.run()</code>.</li>
-          <li><code>engine/game/window.py</code>: Main gameplay loop, player controls, collision, and HUD.</li>
-          <li><code>engine/world/world.py</code>: Chunk loading/unloading, block storage, mesh lifecycle, ray casting.</li>
-          <li><code>engine/world/terrain.py</code>: Seeded Perlin-style terrain height generation.</li>
-          <li><code>engine/graphics/block_renderer.py</code>: Chunk mesh generation + OpenGL upload.</li>
-          <li><code>engine/graphics/rendering.py</code>: 2D/3D camera setup + OpenGL state helpers.</li>
-          <li><code>engine/blocks/registry.py</code>: Block definitions loaded from text files in <code>Blocks/</code>.</li>
-          <li><code>engine/gameplay/inventory.py</code>: 9-slot hotbar logic and stack management.</li>
-          <li><code>engine/debug/profiler.py</code>: Runtime frame timing + lag report export.</li>
-          <li><code>profiling/</code>: Generated profiling reports and latest texture atlas image.</li>
-          <li><code>Blocks/</code>: Human-editable block metadata and PNG textures.</li>
+          <li>Window opens at 1280×720.</li>
+          <li>You first see a loading screen while nearby chunks are generated/meshed.</li>
+          <li>Then terrain renders, crosshair appears, and a 9-slot hotbar is visible.</li>
+          <li>Mouse click captures pointer; WASD movement and block interactions work.</li>
         </ul>
       </article>
 
-      <article class="doc-card" id="how-game-runs" data-title="How the Game Runs">
-        <h2>How the Game Runs (Plain-English flow)</h2>
-        <ol>
-          <li><strong>Startup:</strong> <code>main.py</code> creates <code>GameWindow</code>, sets OpenGL defaults, then starts pyglet's app loop.</li>
-          <li><strong>Window boot:</strong> <code>GameWindow</code> creates a <code>World</code>, primes nearby chunks, and shows a loading screen while visible chunks are meshed.</li>
-          <li><strong>Per-frame update:</strong> movement input is read, gravity is applied, collisions are resolved, and chunk streaming is refreshed.</li>
-          <li><strong>Per-frame draw:</strong> game draws 3D world batch first, then 2D UI (crosshair, debug text, hotbar).</li>
-          <li><strong>Shutdown:</strong> profiler writes reports and world worker threads are stopped.</li>
-        </ol>
-      </article>
-
-      <article class="doc-card" id="module-guide" data-title="Module Guide">
-        <h2>Module Guide</h2>
-
-        <h3>1) <code>engine/game/window.py</code></h3>
-        <ul>
-          <li>Owns player state: position, look rotation, vertical velocity.</li>
-          <li>Handles mouse/keyboard input and block interaction (break/place).</li>
-          <li>Calls <code>world.update_visible_chunks()</code> on a stream timer.</li>
-          <li>Builds and redraws hotbar UI based on <code>Inventory</code>.</li>
-        </ul>
-
-        <h3>2) <code>engine/world/world.py</code></h3>
-        <ul>
-          <li>Stores all loaded blocks in <code>self.blocks</code>.</li>
-          <li>Manages chunk generation workers and mesh build workers in thread pools.</li>
-          <li>Only uploads mesh data on the main thread for rendering safety.</li>
-          <li>Keeps chunk cache to avoid regenerating recently unloaded chunks.</li>
-        </ul>
-
-        <h3>3) <code>engine/world/terrain.py</code></h3>
-        <ul>
-          <li>Generates deterministic terrain from a seed.</li>
-          <li>Returns terrain height for each X/Z via layered noise.</li>
-        </ul>
-
-        <h3>4) <code>engine/graphics/block_renderer.py</code></h3>
-        <ul>
-          <li>Builds chunk mesh data only for visible faces.</li>
-          <li>Supports texture atlas rendering and optional texture-array mode.</li>
-          <li>Exports atlas previews to <code>profiling/atlas_*.png</code>.</li>
-        </ul>
-
-        <h3>5) <code>engine/blocks/registry.py</code></h3>
-        <ul>
-          <li>Loads all <code>Blocks/*.txt</code> files into <code>BlockDefinition</code>.</li>
-          <li>Supports per-face texture fields (<code>texture_top</code>, <code>texture_side</code>, etc.).</li>
-          <li>Provides solid/breakable checks used by gameplay and collision.</li>
-        </ul>
-
-        <h3>6) <code>engine/gameplay/inventory.py</code></h3>
-        <ul>
-          <li>Hotbar with 9 slots.</li>
-          <li>Stack limit: 64.</li>
-          <li>Add logic prefers topping up existing stacks before using empty slots.</li>
-        </ul>
-
-        <h3>7) <code>engine/debug/profiler.py</code></h3>
-        <ul>
-          <li>Tracks frame/section timings.</li>
-          <li>Stores slow frame records with context.</li>
-          <li>Writes JSON and TXT reports on close.</li>
-        </ul>
-      </article>
-
-      <article class="doc-card" id="controls" data-title="Controls">
-        <h2>Controls (Current code behavior)</h2>
+      <article class="doc-card" id="project-orientation" data-title="Project Orientation">
+        <h2>2) Project Orientation: Every Important File</h2>
         <table>
-          <thead>
-            <tr><th>Input</th><th>Action</th></tr>
-          </thead>
+          <thead><tr><th>Path</th><th>Role</th><th>Read first?</th></tr></thead>
           <tbody>
-            <tr><td>W / A / S / D</td><td>Move in first-person plane.</td></tr>
-            <tr><td>Mouse movement</td><td>Look around (while mouse is captured).</td></tr>
-            <tr><td>Left click</td><td>Break targeted block; block goes to inventory.</td></tr>
-            <tr><td>Right click</td><td>Place currently selected inventory block.</td></tr>
-            <tr><td>Mouse wheel</td><td>Change selected hotbar slot.</td></tr>
-            <tr><td>1..9</td><td>Select exact hotbar slot.</td></tr>
-            <tr><td>Space</td><td>Jump when grounded.</td></tr>
-            <tr><td>Esc</td><td>Release mouse capture.</td></tr>
-            <tr><td>I</td><td>Toggle atlas debug preview.</td></tr>
-          </tbody>
-        </table>
-        <p><strong>Note:</strong> README mentions flying, crafting, and mobs, but those keybindings/systems are not currently present in active gameplay code.</p>
-      </article>
-
-      <article class="doc-card" id="blocks" data-title="Blocks and Textures">
-        <h2>Blocks & Textures</h2>
-        <p>Blocks are defined through plain text files in <code>Blocks/</code>, making this project easy for beginners to customize.</p>
-        <table>
-          <thead><tr><th>Block</th><th>Breakable</th><th>Textures</th><th>Usage</th></tr></thead>
-          <tbody>
-            <tr><td>bedrock</td><td>No</td><td>bedrock.png</td><td>Bottom world layer only.</td></tr>
-            <tr><td>stone</td><td>Yes</td><td>stone.png</td><td>Main underground material.</td></tr>
-            <tr><td>dirt</td><td>Yes</td><td>dirt.png</td><td>Near-surface layer.</td></tr>
-            <tr><td>grass</td><td>Yes</td><td>top/side/bottom specific textures</td><td>Surface top layer.</td></tr>
+            <tr><td><code>main.py</code></td><td>Primary entry point. Parses CLI args and starts pyglet loop.</td><td>Yes</td></tr>
+            <tr><td><code>minecraft_clone.py</code></td><td>Thin convenience launcher that calls <code>main.run()</code>.</td><td>Yes</td></tr>
+            <tr><td><code>engine/game/window.py</code></td><td>Main game class: player state, input, physics, draw routine, HUD, loading flow.</td><td>Yes</td></tr>
+            <tr><td><code>engine/world/world.py</code></td><td>Chunk streaming, terrain generation scheduling, block storage, mesh lifecycle, hit test.</td><td>Yes</td></tr>
+            <tr><td><code>engine/world/terrain.py</code></td><td>Deterministic noise-based terrain height function.</td><td>Yes</td></tr>
+            <tr><td><code>engine/graphics/block_renderer.py</code></td><td>Chunk mesh building, texture atlas/array support, GPU upload.</td><td>Later</td></tr>
+            <tr><td><code>engine/graphics/rendering.py</code></td><td>OpenGL mode helpers: 3D camera + 2D UI projection.</td><td>Yes</td></tr>
+            <tr><td><code>engine/blocks/registry.py</code></td><td>Loads block definitions from text files and resolves face textures.</td><td>Yes</td></tr>
+            <tr><td><code>engine/gameplay/inventory.py</code></td><td>9-slot hotbar + stack operations.</td><td>Yes</td></tr>
+            <tr><td><code>engine/debug/profiler.py</code></td><td>Frame + section timing with report export to <code>profiling/</code>.</td><td>Later</td></tr>
+            <tr><td><code>Blocks/*.txt</code></td><td>Human-editable block metadata (breakable/solid/color/texture fields).</td><td>Yes</td></tr>
+            <tr><td><code>Blocks/Textures/*.png</code></td><td>Textures used by blocks.</td><td>Yes</td></tr>
+            <tr><td><code>Documentation/*</code></td><td>This static docs website (HTML/CSS/JS).</td><td>Yes</td></tr>
           </tbody>
         </table>
       </article>
 
-      <article class="doc-card" id="data-flow" data-title="Data Flow">
-        <h2>Data Flow: Click to Break a Block</h2>
+      <article class="doc-card" id="runtime-lifecycle" data-title="Runtime Lifecycle">
+        <h2>3) Runtime Lifecycle: From Process Start to Shutdown</h2>
+        <h3>Startup sequence</h3>
         <ol>
-          <li>User left-clicks.</li>
-          <li><code>GameWindow.on_mouse_press()</code> calls <code>world.hit_test()</code> to find target block.</li>
-          <li><code>world.remove_block()</code> checks if block is breakable and removes it.</li>
-          <li>Inventory gets +1 of that block type.</li>
-          <li>Affected chunk meshes are rebuilt so the visual world updates.</li>
+          <li><code>main.py</code> parses <code>--seed</code> and <code>--use-texture-array</code>.</li>
+          <li><code>GameWindow</code> is created.</li>
+          <li><code>setup_gl()</code> configures clear color + alpha blending.</li>
+          <li>pyglet app loop starts.</li>
         </ol>
-
-        <h2>Data Flow: Place a Block</h2>
-        <ol>
-          <li>User right-clicks.</li>
-          <li>Window gets neighboring empty position from ray hit test.</li>
-          <li>Selected inventory slot is decremented.</li>
-          <li><code>world.add_block()</code> inserts the block and marks chunk(s) dirty.</li>
-          <li>Chunk mesh rebuild uploads new triangles to GPU.</li>
-        </ol>
-      </article>
-
-      <article class="doc-card" id="performance" data-title="Performance and Profiling">
-        <h2>Performance & Profiling</h2>
+        <h3><code>GameWindow</code> initialization highlights</h3>
         <ul>
-          <li>Chunk generation and chunk mesh building are done with background thread pools.</li>
-          <li>Main thread keeps strict per-update budgets for loading, unloading, and mesh uploads.</li>
-          <li>Profiler records section timings like <code>update.visible_chunks</code> and <code>draw.world_batch</code>.</li>
-          <li>Close the game to generate lag reports in <code>profiling/</code>.</li>
+          <li>Creates profiler and clears old lag reports.</li>
+          <li>Builds a <code>World</code> with terrain seed and renderer mode.</li>
+          <li>Primes a tiny chunk area synchronously, then requests visible chunks.</li>
+          <li>Spawns player at <code>height_at(0,0) + 2</code>.</li>
+          <li>Configures a scheduled update callback at <code>TICKS_PER_SECOND</code> (60).</li>
+          <li>Builds UI elements (crosshair, text label, hotbar rectangles/labels).</li>
+          <li>Enters temporary loading-screen mode until required chunks are fully rendered.</li>
         </ul>
-        <p>Tip for beginners: if FPS stutters, inspect <code>profiling/lag_report_latest.txt</code> first.</p>
+        <h3>Per-frame update model</h3>
+        <ul>
+          <li>Update time is clamped (<code>dt ≤ 0.25</code>) to avoid huge physics jumps.</li>
+          <li>Update may be split into substeps (targeting 60Hz simulation granularity).</li>
+          <li>Applies movement vector from key states.</li>
+          <li>Applies gravity and terminal velocity limits.</li>
+          <li>Resolves collisions against solid blocks.</li>
+          <li>Refreshes visible/active chunks on an adaptive stream timer.</li>
+        </ul>
+        <h3>Per-frame draw model</h3>
+        <ul>
+          <li>Draw mode A: atlas debug view (<code>I</code> key).</li>
+          <li>Draw mode B: loading screen (until chunk render readiness).</li>
+          <li>Draw mode C: normal game render → 3D world first, 2D UI second.</li>
+        </ul>
+        <h3>Shutdown</h3>
+        <ul>
+          <li>Profiler writes timestamped and <code>latest</code> reports (<code>.txt</code> and <code>.json</code>).</li>
+          <li>World executors (chunk + mesh workers) are shut down cleanly.</li>
+        </ul>
       </article>
 
-      <article class="doc-card" id="troubleshooting" data-title="Troubleshooting">
-        <h2>Troubleshooting</h2>
-        <details>
-          <summary>The game window opens but is blank/black.</summary>
-          <p>Ensure your graphics drivers are current and that OpenGL is available. This project depends on pyglet creating a valid OpenGL context.</p>
-        </details>
-        <details>
-          <summary>I cannot place blocks.</summary>
-          <p>You can only place if your selected hotbar slot contains a stack. Break blocks first to collect resources.</p>
-        </details>
-        <details>
-          <summary>Chunk loading feels delayed.</summary>
-          <p>This is expected during world streaming. The code throttles chunk requests and mesh uploads to avoid frame spikes.</p>
-        </details>
-        <details>
-          <summary>I edited a block texture and got errors.</summary>
-          <p>The renderer expects tile dimensions that match the atlas tile size (16x16). Use power-of-two PNG textures.</p>
-        </details>
-      </article>
-
-      <article class="doc-card" id="learning-path" data-title="Learning Path">
-        <h2>Learning Path for New Programmers</h2>
+      <article class="doc-card" id="gameplay-mechanics" data-title="Gameplay Mechanics">
+        <h2>4) Gameplay Mechanics (Implemented vs Not Implemented)</h2>
+        <h3>Implemented mechanics</h3>
+        <ul>
+          <li>First-person look + movement (WASD + mouse).</li>
+          <li>Gravity + jump + collision against solid blocks.</li>
+          <li>Block break (left click) using ray cast target selection.</li>
+          <li>Block placement (right click) from selected hotbar stack.</li>
+          <li>Inventory hotbar with 9 slots and stack size 64.</li>
+          <li>Procedural terrain generated from seed.</li>
+          <li>Chunk streaming and distance-based unloading.</li>
+        </ul>
+        <h3>Not implemented in current runtime code</h3>
+        <ul>
+          <li>No active fly mode toggle in input handling.</li>
+          <li>No active crafting system implementation in gameplay loop.</li>
+          <li>No active mob entity simulation module in source tree.</li>
+        </ul>
+        <p><strong>Important for students:</strong> Some older README wording references features that are not present in current gameplay code. Use source files as the ground truth when extending behavior.</p>
+        <h3>Example interaction flow: Breaking a block</h3>
         <ol>
-          <li><strong>Step 1:</strong> Read <code>main.py</code> and <code>minecraft_clone.py</code> to understand startup.</li>
-          <li><strong>Step 2:</strong> Read <code>engine/game/window.py</code> to see input + game loop basics.</li>
-          <li><strong>Step 3:</strong> Read <code>engine/world/terrain.py</code> to understand procedural terrain.</li>
-          <li><strong>Step 4:</strong> Read <code>engine/world/world.py</code> slowly (chunk lifecycle).</li>
-          <li><strong>Step 5:</strong> Read <code>engine/graphics/block_renderer.py</code> when ready for mesh/render details.</li>
-          <li><strong>Step 6:</strong> Experiment: add a new block text file + PNG texture in <code>Blocks/</code>.</li>
+          <li>Left click in exclusive mouse mode.</li>
+          <li><code>world.hit_test(position, view_vector)</code> finds target block + previous empty cell.</li>
+          <li><code>world.remove_block(target)</code> validates breakability and removes.</li>
+          <li>Removed block type is added to inventory via <code>inventory.add()</code>.</li>
+          <li>Affected chunk meshes are rebuilt so visuals update immediately.</li>
         </ol>
+      </article>
+
+      <article class="doc-card" id="world-and-chunks" data-title="World and Chunk System">
+        <h2>5) World & Chunk System: Deep Dive</h2>
+        <h3>Core world constants</h3>
+        <ul>
+          <li><strong>Chunk size:</strong> 16×16 columns in X/Z (<code>SECTOR_SIZE</code>).</li>
+          <li><strong>World height:</strong> 256 Y levels.</li>
+          <li><strong>Visible radius:</strong> 4 chunks from center.</li>
+          <li><strong>Active radius:</strong> 5 chunks desired for loading logic.</li>
+          <li><strong>Unload radius:</strong> 6 chunks.</li>
+          <li><strong>Loaded chunk soft cap:</strong> 140 chunks.</li>
+        </ul>
+        <h3>Data structures you must understand</h3>
+        <ul>
+          <li><code>blocks</code>: global map <code>(x,y,z) -&gt; block_name</code> for currently loaded chunks.</li>
+          <li><code>_chunk_blocks</code>: reverse index <code>chunk -&gt; set(positions)</code>.</li>
+          <li><code>_dirty_chunks</code>: chunks needing mesh rebuild.</li>
+          <li><code>_loaded_chunks</code> / <code>_desired_chunks</code> / <code>_visible_chunks</code>: state sets for streaming policy.</li>
+          <li><code>_chunk_cache</code>: recently unloaded block data to avoid full regeneration when revisiting.</li>
+          <li><code>_modified_blocks</code>: persistent per-position overrides from player edits.</li>
+        </ul>
+        <h3>Chunk generation path</h3>
+        <ol>
+          <li>Determine center chunk from player X/Z.</li>
+          <li>Compute desired and visible chunk sets.</li>
+          <li>Queue missing chunks to thread pool.</li>
+          <li>When a future completes, apply generated data on main thread.</li>
+          <li>Mark chunk dirty and queue mesh build.</li>
+          <li>Upload mesh on main thread and store render handle.</li>
+        </ol>
+        <h3>Terrain composition by Y level</h3>
+        <ul>
+          <li>Y=0: bedrock.</li>
+          <li>Y=height: grass.</li>
+          <li>Y in <code>height-2..height-1</code>: dirt.</li>
+          <li>Lower than that: stone.</li>
+        </ul>
+        <h3>Why border chunks are special</h3>
+        <p>When a chunk loads/unloads, adjacent chunk meshes can become visually stale at the seam. The world marks neighbor chunks dirty so border faces rebuild and stay consistent.</p>
+      </article>
+
+      <article class="doc-card" id="rendering-pipeline" data-title="Rendering Pipeline">
+        <h2>6) Rendering Pipeline: Cameras, Meshes, and Textures</h2>
+        <h3>High-level rendering layers</h3>
+        <ol>
+          <li><strong>Projection setup:</strong> <code>set_3d()</code> builds perspective matrix for world draw.</li>
+          <li><strong>Culling:</strong> back-face culling enabled during world rendering.</li>
+          <li><strong>Batch draw:</strong> all chunk mesh parts render via pyglet batch.</li>
+          <li><strong>UI pass:</strong> switch to orthographic with <code>set_2d()</code> and draw hotbar/text/crosshair.</li>
+        </ol>
+        <h3>How chunk meshes are efficient</h3>
+        <ul>
+          <li>Renderer checks block neighbors and emits only exposed faces.</li>
+          <li>Hidden interior faces are omitted (major triangle count reduction).</li>
+          <li>Chunk meshing is done on worker threads as pure data build.</li>
+          <li>GPU upload happens on main thread for rendering safety.</li>
+        </ul>
+        <h3>Texture behavior</h3>
+        <ul>
+          <li>Block definitions can specify all-faces texture or per-face texture overrides.</li>
+          <li>Atlas mode supports debug visualization (toggle with <code>I</code>).</li>
+          <li>Texture-array mode is optional and experimental via CLI flag.</li>
+          <li>If face texture file is missing, renderer falls back to block color.</li>
+        </ul>
+      </article>
+
+      <article class="doc-card" id="block-system" data-title="Block System">
+        <h2>7) Block System: Authoring Block Definitions Correctly</h2>
+        <p>Every block is loaded from a text file in <code>Blocks/</code>. One file = one block type.</p>
+        <h3>Supported keys in block text files</h3>
+        <table>
+          <thead><tr><th>Key</th><th>Type</th><th>Meaning</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td><code>name</code></td><td>string</td><td>Block ID used in world/inventory.</td><td><code>name=grass</code></td></tr>
+            <tr><td><code>solid</code></td><td>bool</td><td>Whether collisions treat this block as solid.</td><td><code>solid=true</code></td></tr>
+            <tr><td><code>breakable</code></td><td>bool</td><td>Whether player can remove with left click.</td><td><code>breakable=false</code></td></tr>
+            <tr><td><code>color</code></td><td>r,g,b</td><td>Fallback display color (0..1 or 0..255 values).</td><td><code>color=106,170,64</code></td></tr>
+            <tr><td><code>texture</code></td><td>filename</td><td>Default texture for all faces.</td><td><code>texture=stone.png</code></td></tr>
+            <tr><td><code>texture_top</code></td><td>filename</td><td>Overrides top face texture.</td><td><code>texture_top=grass_top.png</code></td></tr>
+            <tr><td><code>texture_bottom</code></td><td>filename</td><td>Overrides bottom face texture.</td><td><code>texture_bottom=dirt.png</code></td></tr>
+            <tr><td><code>texture_side</code></td><td>filename</td><td>Overrides side faces.</td><td><code>texture_side=grass.png</code></td></tr>
+          </tbody>
+        </table>
+        <h3>Example: custom block file</h3>
+        <pre><code># Blocks/marble.txt
+name=marble
+solid=true
+breakable=true
+color=220,220,230
+texture=marble.png</code></pre>
+        <p>Then add <code>Blocks/Textures/marble.png</code>, restart game, and the block type becomes loadable in code.</p>
+      </article>
+
+      <article class="doc-card" id="inventory-system" data-title="Inventory System">
+        <h2>8) Inventory System: Hotbar Rules and Stack Logic</h2>
+        <ul>
+          <li>Hotbar has fixed 9 slots.</li>
+          <li>Each slot can hold one block type up to stack size 64.</li>
+          <li><code>add(block, count)</code> first fills partial stacks, then empty slots.</li>
+          <li><code>remove_selected(count)</code> only consumes from active slot and returns success/failure.</li>
+          <li><code>selected_block()</code> and <code>selected_count()</code> drive HUD label + placement logic.</li>
+        </ul>
+        <h3>Practical consequence</h3>
+        <p>If placement fails unexpectedly, verify the selected slot is not empty and has at least one item.</p>
+      </article>
+
+      <article class="doc-card" id="input-reference" data-title="Controls and Input Reference">
+        <h2>9) Controls & Input Reference (Current Runtime)</h2>
+        <table>
+          <thead><tr><th>Input</th><th>Effect</th><th>Code path</th></tr></thead>
+          <tbody>
+            <tr><td>W / A / S / D</td><td>Horizontal movement vector generation.</td><td><code>get_motion_vector()</code></td></tr>
+            <tr><td>Mouse move (captured)</td><td>Update yaw/pitch with sensitivity 0.15.</td><td><code>on_mouse_motion()</code></td></tr>
+            <tr><td>Left click</td><td>Break targeted block if breakable, add to inventory.</td><td><code>on_mouse_press()</code></td></tr>
+            <tr><td>Right click</td><td>Place selected inventory block into adjacent empty position.</td><td><code>on_mouse_press()</code></td></tr>
+            <tr><td>Mouse wheel</td><td>Cycle hotbar slot selection.</td><td><code>on_mouse_scroll()</code></td></tr>
+            <tr><td>1..9</td><td>Select explicit hotbar slot.</td><td><code>on_key_press()</code></td></tr>
+            <tr><td>Space</td><td>Jump only when vertical velocity is exactly zero (grounded logic).</td><td><code>on_key_press()</code></td></tr>
+            <tr><td>Esc</td><td>Release exclusive mouse capture.</td><td><code>on_key_press()</code></td></tr>
+            <tr><td>I</td><td>Toggle atlas debug fullscreen view.</td><td><code>on_key_press()</code></td></tr>
+          </tbody>
+        </table>
+      </article>
+
+      <article class="doc-card" id="modification-guides" data-title="Modification Guides">
+        <h2>10) Modification Guides (Step-by-Step for Students)</h2>
+        <h3>Guide A: Add a new block type</h3>
+        <ol>
+          <li>Create <code>Blocks/my_block.txt</code> with required fields.</li>
+          <li>Create texture PNG in <code>Blocks/Textures/</code>.</li>
+          <li>Restart game (block registry loads at import time).</li>
+          <li>Optional: add block into world generation logic if you want natural spawning.</li>
+        </ol>
+        <h3>Guide B: Change movement feel</h3>
+        <ol>
+          <li>Open <code>engine/constants.py</code>.</li>
+          <li>Adjust <code>WALK_SPEED</code>, <code>GRAVITY</code>, <code>MAX_JUMP_HEIGHT</code>.</li>
+          <li>Rerun game and test movement/collision.</li>
+        </ol>
+        <h3>Guide C: Change chunk streaming radius</h3>
+        <ol>
+          <li>Edit <code>VISIBLE_RADIUS_CHUNKS</code>, <code>ACTIVE_RADIUS_CHUNKS</code>, <code>UNLOAD_RADIUS_CHUNKS</code> in <code>World</code>.</li>
+          <li>Increase cautiously: larger radius means more CPU + memory + mesh work.</li>
+          <li>Use profiler reports to validate impact.</li>
+        </ol>
+        <h3>Guide D: Add a new keybinding action</h3>
+        <ol>
+          <li>Implement branch in <code>GameWindow.on_key_press()</code>.</li>
+          <li>If stateful, add instance variable in <code>__init__</code>.</li>
+          <li>Integrate behavior into <code>update()</code> and/or <code>on_draw()</code>.</li>
+          <li>Document control in this docs page and README.</li>
+        </ol>
+      </article>
+
+      <article class="doc-card" id="performance-profiling" data-title="Performance and Profiling">
+        <h2>11) Performance & Profiling: How to Diagnose Lag</h2>
+        <h3>Built-in profiler</h3>
+        <ul>
+          <li>Profiler tracks frame durations and named section durations.</li>
+          <li>Slow frames over threshold are stored with context and section breakdown.</li>
+          <li>Reports are written on close: timestamped + latest aliases.</li>
+        </ul>
+        <h3>Report files</h3>
+        <ul>
+          <li><code>profiling/lag_report_latest.txt</code> (human readable summary)</li>
+          <li><code>profiling/lag_report_latest.json</code> (machine-friendly stats)</li>
+        </ul>
+        <h3>Tuning levers in world streaming</h3>
+        <ul>
+          <li>Chunk request/apply per update limits.</li>
+          <li>Mesh rebuild queue limits.</li>
+          <li>Main-thread upload budgets for chunks and meshes.</li>
+          <li>Hard cap unload pacing to avoid long frame stalls.</li>
+        </ul>
+        <p>General rule: prioritize smooth frame pacing over max throughput when editing these values.</p>
+      </article>
+
+      <article class="doc-card" id="debugging" data-title="Debugging and Troubleshooting">
+        <h2>12) Debugging & Troubleshooting</h2>
+        <details>
+          <summary>Window opens but appears black.</summary>
+          <p>Likely OpenGL context/driver issue. Confirm pyglet can create GL context and that your system supports required GL features.</p>
+        </details>
+        <details>
+          <summary>Blocks are invisible or textures look wrong.</summary>
+          <p>Check that texture filenames in block definitions exactly match files in <code>Blocks/Textures/</code>. Try disabling <code>--use-texture-array</code> to compare behavior.</p>
+        </details>
+        <details>
+          <summary>Cannot place blocks.</summary>
+          <p>Selected hotbar slot may be empty. Break blocks first, scroll/select slot with items, then place.</p>
+        </details>
+        <details>
+          <summary>Chunk streaming feels delayed.</summary>
+          <p>This is expected to some degree because loading/meshing is intentionally budgeted to protect frame-time consistency.</p>
+        </details>
+        <details>
+          <summary>I changed a <code>Blocks/*.txt</code> file but behavior didn't change.</summary>
+          <p>Block registry is loaded at import time; restart the process after edits.</p>
+        </details>
+      </article>
+
+      <article class="doc-card" id="code-reading-roadmap" data-title="Code Reading Roadmap">
+        <h2>13) Code Reading Roadmap (For Total Beginners)</h2>
+        <ol>
+          <li><strong>Start:</strong> <code>main.py</code> + <code>minecraft_clone.py</code> (startup only).</li>
+          <li><strong>Then:</strong> <code>engine/constants.py</code> (gameplay knobs).</li>
+          <li><strong>Then:</strong> <code>engine/game/window.py</code> (input, update loop, UI).</li>
+          <li><strong>Then:</strong> <code>engine/gameplay/inventory.py</code> (simple, self-contained logic).</li>
+          <li><strong>Then:</strong> <code>engine/blocks/registry.py</code> + sample block files.</li>
+          <li><strong>Then:</strong> <code>engine/world/terrain.py</code> (math behind height map).</li>
+          <li><strong>Then:</strong> <code>engine/world/world.py</code> (largest systems integration module).</li>
+          <li><strong>Finally:</strong> renderer internals + profiler reporting.</li>
+        </ol>
+        <p>Study tip: when reading <code>world.py</code>, annotate each set/dict with "ownership" and "lifecycle" notes. Most complexity is state transitions, not math.</p>
       </article>
 
       <article class="doc-card" id="faq" data-title="FAQ">
-        <h2>FAQ</h2>
-        <p><strong>Q: Is this project fully equivalent to Minecraft?</strong><br />
-        A: No. It is a compact educational clone focused on voxel world fundamentals.</p>
+        <h2>14) FAQ</h2>
+        <p><strong>Q: Is world generation repeatable?</strong><br />
+        A: Yes. Same seed gives same base terrain heights and block layers.</p>
 
-        <p><strong>Q: Why is there both <code>main.py</code> and <code>minecraft_clone.py</code>?</strong><br />
-        A: <code>minecraft_clone.py</code> is a convenience launcher; <code>main.py</code> has CLI options like seed selection.</p>
+        <p><strong>Q: Are player edits persistent while chunks unload/reload?</strong><br />
+        A: Yes during runtime. <code>_modified_blocks</code> and per-chunk modified-position tracking re-apply edits when a chunk is reloaded.</p>
 
-        <p><strong>Q: Can I add new blocks without touching Python code?</strong><br />
-        A: Usually yes—drop a new <code>Blocks/*.txt</code> definition and corresponding texture file.</p>
+        <p><strong>Q: Why are there two launch files?</strong><br />
+        A: <code>main.py</code> includes CLI options; <code>minecraft_clone.py</code> is a convenience alias.</p>
+
+        <p><strong>Q: Can I edit docs safely without touching game code?</strong><br />
+        A: Yes. Documentation is standalone static files under <code>Documentation/</code>.</p>
       </article>
 
       <article class="doc-card" id="glossary" data-title="Glossary">
-        <h2>Glossary</h2>
+        <h2>15) Glossary</h2>
         <ul>
-          <li><strong>Voxel:</strong> A 3D pixel (a block in this game).</li>
-          <li><strong>Chunk:</strong> A square region of blocks grouped for streaming and rendering.</li>
-          <li><strong>Mesh:</strong> Vertex/index data sent to GPU for drawing.</li>
-          <li><strong>Face culling:</strong> Hiding block sides that touch other solid blocks.</li>
-          <li><strong>Ray cast / hit test:</strong> Shooting an invisible line to find targeted blocks.</li>
-          <li><strong>Seed:</strong> Starting number that makes procedural generation repeatable.</li>
+          <li><strong>Voxel:</strong> 3D discrete cell (here, a block).</li>
+          <li><strong>Chunk:</strong> Group of block columns managed as streaming/rendering unit.</li>
+          <li><strong>Frustum culling:</strong> Limiting work for chunks likely outside view direction.</li>
+          <li><strong>Mesh:</strong> Vertex data submitted to GPU for drawing geometry.</li>
+          <li><strong>Dirty chunk:</strong> Chunk flagged for mesh rebuild because blocks changed or neighbor borders changed.</li>
+          <li><strong>Hit test / ray cast:</strong> Line-of-sight traversal used to find targeted block.</li>
+          <li><strong>Main-thread upload:</strong> Rendering object creation done on render thread for safety.</li>
+          <li><strong>Seed:</strong> Number initializing deterministic procedural generation.</li>
         </ul>
       </article>
     </section>
