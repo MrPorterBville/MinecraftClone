@@ -13,57 +13,6 @@ from engine.gameplay.inventory import Inventory
 from engine.graphics.rendering import set_2d, set_3d
 from engine.world.world import World
 
-def mat4_identity():
-    return [
-        1,0,0,0,
-        0,1,0,0,
-        0,0,1,0,
-        0,0,0,1,
-    ]
-
-def mat4_mul(a, b):
-    out = [0]*16
-    for r in range(4):
-        for c in range(4):
-            out[r*4+c] = sum(
-                a[r*4+k] * b[k*4+c] for k in range(4)
-            )
-    return out
-
-def mat4_translate(x, y, z):
-    m = mat4_identity()
-    m[12], m[13], m[14] = x, y, z
-    return m
-
-def mat4_scale(sx, sy, sz):
-    return [
-        sx,0,0,0,
-        0,sy,0,0,
-        0,0,sz,0,
-        0,0,0,1,
-    ]
-
-def mat4_rotate_x(deg):
-    r = math.radians(deg)
-    c, s = math.cos(r), math.sin(r)
-    return [
-        1,0,0,0,
-        0,c,s,0,
-        0,-s,c,0,
-        0,0,0,1,
-    ]
-
-def mat4_rotate_y(deg):
-    r = math.radians(deg)
-    c, s = math.cos(r), math.sin(r)
-    return [
-        c,0,-s,0,
-        0,1,0,0,
-        s,0,c,0,
-        0,0,0,1,
-    ]
-
-
 class GameWindow(pyglet.window.Window):
     CHUNK_STREAM_UPDATE_INTERVAL_SECONDS = 1.0 / 20.0
     CHUNK_STREAM_UPDATE_INTERVAL_OVER_CAP_SECONDS = 1.0 / 8.0
@@ -526,22 +475,17 @@ class GameWindow(pyglet.window.Window):
 
     def _draw_3d_cube_icon(self, x: float, y: float, size: float, block_name: str):
         r = self.world.renderer
-
-        # Convert screen-space to clip-ish space
         cx = x + size / 2
         cy = y + size / 2
         scale = size * 0.4
 
-        model = mat4_identity()
-        model = mat4_mul(model, mat4_translate(cx, cy, -20))
-        model = mat4_mul(model, mat4_scale(scale, scale, scale))
-        model = mat4_mul(model, mat4_rotate_x(30))
-        model = mat4_mul(model, mat4_rotate_y(45))
-
-        # Enable depth properly
         gl.glEnable(gl.GL_DEPTH_TEST)
-
-        # Override model matrix ONLY for this draw
-        r.push_model_override(model)
+        gl.glMatrixMode(gl.GL_MODELVIEW)
+        gl.glPushMatrix()
+        gl.glLoadIdentity()
+        gl.glTranslatef(cx, cy, -20.0)
+        gl.glScalef(scale, scale, scale)
+        gl.glRotatef(30.0, 1.0, 0.0, 0.0)
+        gl.glRotatef(45.0, 0.0, 1.0, 0.0)
         r.draw_single_block(block_name)
-        r.pop_model_override()
+        gl.glPopMatrix()

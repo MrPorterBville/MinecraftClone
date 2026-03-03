@@ -714,55 +714,42 @@ void main()
         return self.upload_chunk_mesh(mesh_data, batch, group)
     
     def draw_single_block(self, block_name: str):
-        """Renders a single 1x1x1 cube using immediate mode OpenGL."""
-        self._override_model = None
-        # 1. Get the block data from your registry
-        from engine.blocks import BLOCKS, get_block_texture_for_face
-        block = BLOCKS.get(block_name)
-        if not block:
+        """Render a small textured cube in the current model-view transform."""
+        if block_name not in BLOCKS or self._atlas_texture is None:
             return
 
-        # 2. Setup the Texture Atlas
-        gl.glEnable(gl.GL_TEXTURE_2D)
-        if self._atlas_texture:
-            gl.glBindTexture(gl.GL_TEXTURE_2D, self._atlas_texture.id)
-
-        # 3. Define the 6 faces of a unit cube
-        # Format: (face_index, vertices)
-        # Vertices are 4 points (x, y, z) per face
         faces = [
-            # Right (+X)
-            (0, (0.5, -0.5, 0.5,  0.5, -0.5, -0.5,  0.5, 0.5, -0.5,  0.5, 0.5, 0.5)),
-            # Left (-X)
+            (0, (0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5)),
             (1, (-0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5)),
-            # Top (+Y)
-            (2, (-0.5, 0.5, 0.5,  0.5, 0.5, 0.5,  0.5, 0.5, -0.5, -0.5, 0.5, -0.5)),
-            # Bottom (-Y)
-            (3, (-0.5, -0.5, -0.5,  0.5, -0.5, -0.5,  0.5, -0.5, 0.5, -0.5, -0.5, 0.5)),
-            # Front (+Z)
-            (4, (-0.5, -0.5, 0.5,  0.5, -0.5, 0.5,  0.5, 0.5, 0.5, -0.5, 0.5, 0.5)),
-            # Back (-Z)
-            (5, (0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5,  0.5, 0.5, -0.5)),
+            (2, (-0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, -0.5, -0.5, 0.5, -0.5)),
+            (3, (-0.5, -0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5, -0.5, -0.5, 0.5)),
+            (4, (-0.5, -0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5, 0.5)),
+            (5, (0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5)),
         ]
 
-        model = self._override_model ['model'] = model
+        gl.glEnable(gl.GL_TEXTURE_2D)
+        gl.glBindTexture(gl.GL_TEXTURE_2D, self._atlas_texture.id)
+        gl.glColor4f(1.0, 1.0, 1.0, 1.0)
+
         gl.glBegin(gl.GL_QUADS)
         for face_index, vertices in faces:
-            # Get the texture name for this specific side
-            tex_name = get_block_texture_for_face(block_name, face_index)
-            
-            # Get UV coordinates from your atlas map
-            # This assumes you have a dictionary mapping texture names to (u1, v1, u2, v2)
-            uvs = self.texture_uvs.get(tex_name, (0, 0, 1, 1))
-            u1, v1, u2, v2 = uvs
+            texture_name = get_block_texture_for_face(block_name, face_index)
+            atlas_rect = self._atlas_rects.get(texture_name)
+            if atlas_rect is None:
+                u1, v1, u2, v2 = 0.0, 0.0, 1.0, 1.0
+            else:
+                u1, v1, u2, v2 = atlas_rect
 
-            # Draw the 4 corners with their UVs
-            gl.glTexCoord2f(u1, v1); gl.glVertex3f(vertices[0], vertices[1], vertices[2])
-            gl.glTexCoord2f(u2, v1); gl.glVertex3f(vertices[3], vertices[4], vertices[5])
-            gl.glTexCoord2f(u2, v2); gl.glVertex3f(vertices[6], vertices[7], vertices[8])
-            gl.glTexCoord2f(u1, v2); gl.glVertex3f(vertices[9], vertices[10], vertices[11])
+            gl.glTexCoord2f(u2, v1)
+            gl.glVertex3f(vertices[0], vertices[1], vertices[2])
+            gl.glTexCoord2f(u1, v1)
+            gl.glVertex3f(vertices[3], vertices[4], vertices[5])
+            gl.glTexCoord2f(u1, v2)
+            gl.glVertex3f(vertices[6], vertices[7], vertices[8])
+            gl.glTexCoord2f(u2, v2)
+            gl.glVertex3f(vertices[9], vertices[10], vertices[11])
         gl.glEnd()
-        
+
         gl.glDisable(gl.GL_TEXTURE_2D)
 
     def push_model_override(self, mat):
