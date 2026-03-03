@@ -729,8 +729,8 @@ void main()
             zx = y * sin_x + z * cos_x
             xy = x * cos_y + zx * sin_y
             zy = -x * sin_y + zx * cos_y
-            return (cx + xy * scale, cy + yx * scale, zy)
-
+            return (cx + xy * scale, cy + yx * scale, zy * scale)
+        
         faces = [
             (0, ((0.5, -0.5, 0.5), (0.5, -0.5, -0.5), (0.5, 0.5, -0.5), (0.5, 0.5, 0.5))),
             (1, ((-0.5, -0.5, -0.5), (-0.5, -0.5, 0.5), (-0.5, 0.5, 0.5), (-0.5, 0.5, -0.5))),
@@ -767,19 +767,15 @@ void main()
                 texcoords.extend((u, v, 0.0))
                 colors.extend((0.0, 0.0, 0.0, 0.0))
 
-        icon_batch = pyglet.graphics.Batch()
-        shader_group = pyglet.graphics.ShaderGroup(self.shader)
-        texture_group = pyglet.graphics.TextureGroup(self._atlas_texture, parent=shader_group)
         icon_vertex_list = self.shader.vertex_list(
             len(positions) // 3,
             gl.GL_TRIANGLES,
-            batch=icon_batch,
-            group=texture_group,
             position=("f/dynamic", positions),
             colors=("f/dynamic", colors),
             tex_coords=("f/dynamic", texcoords),
         )
-        icon_batch.draw()
+        gl.glBindTexture(self._atlas_texture.target, self._atlas_texture.id)
+        icon_vertex_list.draw(gl.GL_TRIANGLES)
         icon_vertex_list.delete()
 
     def push_model_override(self, mat):

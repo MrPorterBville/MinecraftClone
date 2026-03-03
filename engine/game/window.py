@@ -478,4 +478,5 @@ class GameWindow(pyglet.window.Window):
         cx = x + size / 2
         cy = y + size / 2
         scale = size * 0.4
+
         r.draw_single_block(block_name, cx=cx, cy=cy, scale=scale)
