@@ -478,14 +478,4 @@ class GameWindow(pyglet.window.Window):
         cx = x + size / 2
         cy = y + size / 2
         scale = size * 0.4
-
-        gl.glEnable(gl.GL_DEPTH_TEST)
-        gl.glMatrixMode(gl.GL_MODELVIEW)
-        gl.glPushMatrix()
-        gl.glLoadIdentity()
-        gl.glTranslatef(cx, cy, -20.0)
-        gl.glScalef(scale, scale, scale)
-        gl.glRotatef(30.0, 1.0, 0.0, 0.0)
-        gl.glRotatef(45.0, 0.0, 1.0, 0.0)
-        r.draw_single_block(block_name)
-        gl.glPopMatrix()
+        r.draw_single_block(block_name, cx=cx, cy=cy, scale=scale)

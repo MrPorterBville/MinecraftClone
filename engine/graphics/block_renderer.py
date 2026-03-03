@@ -713,25 +713,38 @@ void main()
         mesh_data = self.build_chunk_mesh_data(positions, blocks, solid_blocks)
         return self.upload_chunk_mesh(mesh_data, batch, group)
     
-    def draw_single_block(self, block_name: str):
-        """Render a small textured cube in the current model-view transform."""
+    def draw_single_block(self, block_name: str, cx: float, cy: float, scale: float):
+        """Render a small textured cube icon in screen-space for HUD slots."""
         if block_name not in BLOCKS or self._atlas_texture is None:
             return
 
+        sin_x = math.sin(math.radians(30.0))
+        cos_x = math.cos(math.radians(30.0))
+        sin_y = math.sin(math.radians(45.0))
+        cos_y = math.cos(math.radians(45.0))
+
+        def _transform(vertex: tuple[float, float, float]) -> tuple[float, float, float]:
+            x, y, z = vertex
+            yx = y * cos_x - z * sin_x
+            zx = y * sin_x + z * cos_x
+            xy = x * cos_y + zx * sin_y
+            zy = -x * sin_y + zx * cos_y
+            return (cx + xy * scale, cy + yx * scale, zy)
+
         faces = [
-            (0, (0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5)),
-            (1, (-0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5)),
-            (2, (-0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, -0.5, -0.5, 0.5, -0.5)),
-            (3, (-0.5, -0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5, -0.5, -0.5, 0.5)),
-            (4, (-0.5, -0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5, 0.5)),
-            (5, (0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5)),
+            (0, ((0.5, -0.5, 0.5), (0.5, -0.5, -0.5), (0.5, 0.5, -0.5), (0.5, 0.5, 0.5))),
+            (1, ((-0.5, -0.5, -0.5), (-0.5, -0.5, 0.5), (-0.5, 0.5, 0.5), (-0.5, 0.5, -0.5))),
+            (2, ((-0.5, 0.5, 0.5), (0.5, 0.5, 0.5), (0.5, 0.5, -0.5), (-0.5, 0.5, -0.5))),
+            (3, ((-0.5, -0.5, -0.5), (0.5, -0.5, -0.5), (0.5, -0.5, 0.5), (-0.5, -0.5, 0.5))),
+            (4, ((-0.5, -0.5, 0.5), (0.5, -0.5, 0.5), (0.5, 0.5, 0.5), (-0.5, 0.5, 0.5))),
+            (5, ((0.5, -0.5, -0.5), (-0.5, -0.5, -0.5), (-0.5, 0.5, -0.5), (0.5, 0.5, -0.5))),
         ]
 
-        gl.glEnable(gl.GL_TEXTURE_2D)
-        gl.glBindTexture(gl.GL_TEXTURE_2D, self._atlas_texture.id)
-        gl.glColor4f(1.0, 1.0, 1.0, 1.0)
+        positions: list[float] = []
+        texcoords: list[float] = []
+        colors: list[float] = []
+        tri_order = (0, 1, 2, 0, 2, 3)
 
-        gl.glBegin(gl.GL_QUADS)
         for face_index, vertices in faces:
             texture_name = get_block_texture_for_face(block_name, face_index)
             atlas_rect = self._atlas_rects.get(texture_name)
@@ -740,17 +753,34 @@ void main()
             else:
                 u1, v1, u2, v2 = atlas_rect
 
-            gl.glTexCoord2f(u2, v1)
-            gl.glVertex3f(vertices[0], vertices[1], vertices[2])
-            gl.glTexCoord2f(u1, v1)
-            gl.glVertex3f(vertices[3], vertices[4], vertices[5])
-            gl.glTexCoord2f(u1, v2)
-            gl.glVertex3f(vertices[6], vertices[7], vertices[8])
-            gl.glTexCoord2f(u2, v2)
-            gl.glVertex3f(vertices[9], vertices[10], vertices[11])
-        gl.glEnd()
+            transformed = tuple(_transform(v) for v in vertices)
+            uv_lookup = (
+                (u2, v1),
+                (u1, v1),
+                (u1, v2),
+                (u2, v2),
+            )
+            for idx in tri_order:
+                px, py, pz = transformed[idx]
+                positions.extend((px, py, pz))
+                u, v = uv_lookup[idx]
+                texcoords.extend((u, v, 0.0))
+                colors.extend((0.0, 0.0, 0.0, 0.0))
 
-        gl.glDisable(gl.GL_TEXTURE_2D)
+        icon_batch = pyglet.graphics.Batch()
+        shader_group = pyglet.graphics.ShaderGroup(self.shader)
+        texture_group = pyglet.graphics.TextureGroup(self._atlas_texture, parent=shader_group)
+        icon_vertex_list = self.shader.vertex_list(
+            len(positions) // 3,
+            gl.GL_TRIANGLES,
+            batch=icon_batch,
+            group=texture_group,
+            position=("f/dynamic", positions),
+            colors=("f/dynamic", colors),
+            tex_coords=("f/dynamic", texcoords),
+        )
+        icon_batch.draw()
+        icon_vertex_list.delete()
 
     def push_model_override(self, mat):
         self._override_model = mat
