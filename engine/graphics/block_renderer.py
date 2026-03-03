@@ -740,9 +740,7 @@ void main()
             (5, ((0.5, -0.5, -0.5), (-0.5, -0.5, -0.5), (-0.5, 0.5, -0.5), (0.5, 0.5, -0.5))),
         ]
 
-        positions: list[float] = []
-        texcoords: list[float] = []
-        colors: list[float] = []
+        face_triangles: list[tuple[float, list[float], list[float], list[float]]] = []
         tri_order = (0, 1, 2, 0, 2, 3)
 
         for face_index, vertices in faces:
@@ -754,28 +752,48 @@ void main()
                 u1, v1, u2, v2 = atlas_rect
 
             transformed = tuple(_transform(v) for v in vertices)
+            depth = sum(vertex[2] for vertex in transformed) / 4.0
             uv_lookup = (
                 (u2, v1),
                 (u1, v1),
                 (u1, v2),
                 (u2, v2),
             )
-            for idx in tri_order:
-                px, py, pz = transformed[idx]
-                positions.extend((px, py, pz))
-                u, v = uv_lookup[idx]
-                texcoords.extend((u, v, 0.0))
-                colors.extend((0.0, 0.0, 0.0, 0.0))
 
+            face_positions: list[float] = []
+            face_texcoords: list[float] = []
+            face_colors: list[float] = []
+            for idx in tri_order:
+                px, py, _ = transformed[idx]
+                face_positions.extend((px, py, 0.0))
+                u, v = uv_lookup[idx]
+                face_texcoords.extend((u, v, 0.0))
+                face_colors.extend((0.0, 0.0, 0.0, 0.0))
+
+            face_triangles.append((depth, face_positions, face_texcoords, face_colors))
+
+        face_triangles.sort(key=lambda item: item[0])
+
+        positions: list[float] = []
+        texcoords: list[float] = []
+        colors: list[float] = []
+        for _, face_positions, face_texcoords, face_colors in face_triangles:
+            positions.extend(face_positions)
+            texcoords.extend(face_texcoords)
+            colors.extend(face_colors)
+
+        icon_group = pyglet.graphics.TextureGroup(self._atlas_texture)
         icon_vertex_list = self.shader.vertex_list(
             len(positions) // 3,
             gl.GL_TRIANGLES,
+            group=icon_group,
             position=("f/dynamic", positions),
             colors=("f/dynamic", colors),
             tex_coords=("f/dynamic", texcoords),
         )
-        gl.glBindTexture(self._atlas_texture.target, self._atlas_texture.id)
+        icon_group.set_state()
         icon_vertex_list.draw(gl.GL_TRIANGLES)
+        icon_group.unset_state()
         icon_vertex_list.delete()
 
     def push_model_override(self, mat):
