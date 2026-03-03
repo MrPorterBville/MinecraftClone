@@ -1,0 +1,234 @@
+Minecraft Clone Lag Report
+Generated: 2026-03-03 08:46:47
+Slow frame threshold: 25.00 ms
+
+Frame Stats
+- frame.update: count=945 avg=3.79ms p95=18.07ms p99=34.11ms max=101.24ms
+- frame.draw: count=946 avg=3.30ms p95=12.89ms p99=32.19ms max=60.73ms
+
+Section Stats
+- draw.loading: count=238 avg=2.448ms p95=8.907ms p99=43.875ms max=60.684ms
+- update.visible_chunks: count=601 avg=5.296ms p95=21.178ms p99=42.523ms max=91.274ms
+- world.chunk.apply.single: count=144 avg=5.562ms p95=13.103ms p99=42.487ms max=80.354ms
+- world.visible.queue_mesh_rebuilds: count=587 avg=3.000ms p95=11.650ms p99=20.634ms max=88.147ms
+- world.mesh.upload.single: count=165 avg=1.890ms p95=6.622ms p99=15.569ms max=22.509ms
+- draw.ui_batch: count=708 avg=0.783ms p95=1.875ms p99=14.177ms max=16.662ms
+- world.visible.apply_completed_chunks: count=602 avg=1.417ms p95=4.835ms p99=13.979ms max=80.690ms
+- world.visible.upload_completed_meshes: count=602 avg=0.542ms p95=1.336ms p99=9.686ms max=22.676ms
+- draw.set_3d: count=708 avg=0.402ms p95=0.923ms p99=7.840ms max=14.790ms
+- draw.clear: count=946 avg=0.804ms p95=4.954ms p99=7.606ms max=46.517ms
+- world.visible.unload_chunks: count=602 avg=0.319ms p95=0.017ms p99=7.264ms max=75.861ms
+- draw.world_batch: count=708 avg=0.556ms p95=1.572ms p99=3.294ms max=23.329ms
+- draw.hotbar_icons: count=708 avg=0.485ms p95=1.339ms p99=2.572ms max=13.521ms
+- draw.ui_update: count=708 avg=0.101ms p95=0.058ms p99=1.242ms max=24.807ms
+- draw.set_2d: count=708 avg=0.149ms p95=0.308ms p99=1.192ms max=11.032ms
+- world.visible.queue_requests: count=602 avg=0.040ms p95=0.040ms p99=0.051ms max=8.101ms
+- world.visible.compute_desired: count=602 avg=0.026ms p95=0.038ms p99=0.044ms max=0.097ms
+- update.collide: count=1497 avg=0.005ms p95=0.009ms p99=0.011ms max=0.056ms
+- update.ensure_chunk_loaded: count=1497 avg=0.001ms p95=0.002ms p99=0.008ms max=0.019ms
+- update.motion_vector: count=1497 avg=0.002ms p95=0.005ms p99=0.007ms max=0.029ms
+- world.visible.cancel_outside_requests: count=602 avg=0.002ms p95=0.002ms p99=0.002ms max=0.051ms
+- update.physics: count=1497 avg=0.001ms p95=0.001ms p99=0.002ms max=0.033ms
+
+Slow Frames (38)
+1. update total=101.24ms context={'chunk': [-1, -1], 'steps': 2, 'loaded_chunks': 122, 'visible_chunks': 47, 'active_chunks': 121, 'requested_chunks': 3, 'dirty_chunks': 39, 'chunk_futures': 3, 'mesh_futures': 2, 'mesh_ready_queue': 0, 'chunk_ready_queue': 3, 'chunk_meshes': 33}
+   - update.visible_chunks: 91.27ms
+   - world.visible.queue_mesh_rebuilds: 86.90ms
+   - world.visible.apply_completed_chunks: 4.21ms
+   - world.chunk.apply.single: 4.00ms
+   - world.visible.queue_requests: 0.05ms
+2. update total=95.61ms context={'chunk': [-1, -1], 'steps': 2, 'loaded_chunks': 140, 'visible_chunks': 47, 'active_chunks': 121, 'requested_chunks': 0, 'dirty_chunks': 44, 'chunk_futures': 0, 'mesh_futures': 6, 'mesh_ready_queue': 1, 'chunk_ready_queue': 0, 'chunk_meshes': 40}
+   - update.visible_chunks: 89.37ms
+   - world.visible.queue_mesh_rebuilds: 88.15ms
+   - world.visible.upload_completed_meshes: 1.11ms
+   - world.mesh.upload.single: 1.04ms
+   - world.visible.compute_desired: 0.03ms
+3. update total=89.86ms context={'chunk': [-2, -1], 'steps': 2, 'loaded_chunks': 140, 'visible_chunks': 46, 'active_chunks': 121, 'requested_chunks': 2, 'dirty_chunks': 37, 'chunk_futures': 2, 'mesh_futures': 5, 'mesh_ready_queue': 0, 'chunk_ready_queue': 2, 'chunk_meshes': 37}
+   - update.visible_chunks: 89.16ms
+   - world.visible.unload_chunks: 75.86ms
+   - world.visible.queue_mesh_rebuilds: 8.60ms
+   - world.visible.apply_completed_chunks: 4.58ms
+   - world.chunk.apply.single: 4.34ms
+4. update total=83.25ms context={'chunk': [-1, -1], 'steps': 2, 'loaded_chunks': 127, 'visible_chunks': 48, 'active_chunks': 121, 'requested_chunks': 8, 'dirty_chunks': 45, 'chunk_futures': 8, 'mesh_futures': 4, 'mesh_ready_queue': 0, 'chunk_ready_queue': 8, 'chunk_meshes': 29}
+   - update.visible_chunks: 80.91ms
+   - world.visible.apply_completed_chunks: 80.69ms
+   - world.chunk.apply.single: 80.35ms
+   - world.visible.queue_requests: 0.04ms
+   - world.visible.compute_desired: 0.03ms
+5. update total=78.11ms context={'chunk': [0, 0], 'steps': 2, 'loaded_chunks': 107, 'visible_chunks': 81, 'active_chunks': 121, 'requested_chunks': 9, 'dirty_chunks': 83, 'chunk_futures': 9, 'mesh_futures': 6, 'mesh_ready_queue': 0, 'chunk_ready_queue': 8, 'chunk_meshes': 18}
+   - update.visible_chunks: 78.10ms
+   - world.visible.queue_mesh_rebuilds: 66.57ms
+   - world.visible.upload_completed_meshes: 6.70ms
+   - world.mesh.upload.single: 6.62ms
+   - world.visible.apply_completed_chunks: 4.71ms
+6. draw total=60.73ms context={'loaded_chunks': 96, 'visible_chunks': 81, 'active_chunks': 121, 'requested_chunks': 9, 'dirty_chunks': 75, 'chunk_futures': 9, 'mesh_futures': 6, 'mesh_ready_queue': 0, 'chunk_ready_queue': 9, 'chunk_meshes': 15}
+   - draw.loading: 60.68ms
+   - draw.clear: 0.04ms
+7. draw total=56.87ms context={'loaded_chunks': 86, 'visible_chunks': 81, 'active_chunks': 121, 'requested_chunks': 9, 'dirty_chunks': 68, 'chunk_futures': 9, 'mesh_futures': 6, 'mesh_ready_queue': 0, 'chunk_ready_queue': 9, 'chunk_meshes': 12}
+   - draw.loading: 56.80ms
+   - draw.clear: 0.05ms
+8. draw total=52.16ms context={'loaded_chunks': 75, 'visible_chunks': 81, 'active_chunks': 121, 'requested_chunks': 9, 'dirty_chunks': 59, 'chunk_futures': 9, 'mesh_futures': 6, 'mesh_ready_queue': 0, 'chunk_ready_queue': 9, 'chunk_meshes': 10}
+   - draw.clear: 46.52ms
+   - draw.loading: 5.62ms
+9. draw total=43.94ms context={'loaded_chunks': 64, 'visible_chunks': 81, 'active_chunks': 121, 'requested_chunks': 9, 'dirty_chunks': 50, 'chunk_futures': 9, 'mesh_futures': 6, 'mesh_ready_queue': 0, 'chunk_ready_queue': 9, 'chunk_meshes': 8}
+   - draw.loading: 43.87ms
+   - draw.clear: 0.06ms
+10. update total=42.81ms context={'chunk': [0, 0], 'steps': 2, 'loaded_chunks': 84, 'visible_chunks': 81, 'active_chunks': 121, 'requested_chunks': 9, 'dirty_chunks': 66, 'chunk_futures': 9, 'mesh_futures': 6, 'mesh_ready_queue': 0, 'chunk_ready_queue': 9, 'chunk_meshes': 12}
+   - update.visible_chunks: 42.80ms
+   - world.visible.apply_completed_chunks: 42.67ms
+   - world.chunk.apply.single: 42.49ms
+   - world.visible.queue_requests: 0.03ms
+   - world.visible.unload_chunks: 0.01ms
+11. draw total=42.79ms context={'loaded_chunks': 55, 'visible_chunks': 81, 'active_chunks': 121, 'requested_chunks': 9, 'dirty_chunks': 42, 'chunk_futures': 9, 'mesh_futures': 6, 'mesh_ready_queue': 0, 'chunk_ready_queue': 9, 'chunk_meshes': 7}
+   - draw.clear: 38.97ms
+   - draw.loading: 3.80ms
+12. update total=42.62ms context={'chunk': [-2, -1], 'steps': 2, 'loaded_chunks': 140, 'visible_chunks': 47, 'active_chunks': 121, 'requested_chunks': 0, 'dirty_chunks': 34, 'chunk_futures': 0, 'mesh_futures': 3, 'mesh_ready_queue': 1, 'chunk_ready_queue': 0, 'chunk_meshes': 43}
+   - update.visible_chunks: 42.52ms
+   - world.visible.queue_mesh_rebuilds: 41.36ms
+   - world.visible.upload_completed_meshes: 1.05ms
+   - world.mesh.upload.single: 0.99ms
+   - world.visible.compute_desired: 0.03ms
+13. update total=39.84ms context={'chunk': [0, 0], 'steps': 3, 'loaded_chunks': 12, 'visible_chunks': 81, 'active_chunks': 121, 'requested_chunks': 3, 'dirty_chunks': 9, 'chunk_futures': 3, 'mesh_futures': 2, 'mesh_ready_queue': 0, 'chunk_ready_queue': 2, 'chunk_meshes': 1}
+   - update.visible_chunks: 39.82ms
+   - world.visible.queue_mesh_rebuilds: 36.55ms
+   - world.visible.apply_completed_chunks: 3.13ms
+   - world.chunk.apply.single: 2.98ms
+   - world.visible.queue_requests: 0.05ms
+14. draw total=39.76ms context={'loaded_chunks': 132, 'visible_chunks': 48, 'active_chunks': 121, 'requested_chunks': 9, 'dirty_chunks': 46, 'chunk_futures': 9, 'mesh_futures': 6, 'mesh_ready_queue': 2, 'chunk_ready_queue': 9, 'chunk_meshes': 31}
+   - draw.world_batch: 20.36ms
+   - draw.set_3d: 7.19ms
+   - draw.ui_batch: 5.99ms
+   - draw.clear: 5.03ms
+   - draw.hotbar_icons: 0.72ms
+15. draw total=37.79ms context={'loaded_chunks': 45, 'visible_chunks': 81, 'active_chunks': 121, 'requested_chunks': 9, 'dirty_chunks': 34, 'chunk_futures': 9, 'mesh_futures': 6, 'mesh_ready_queue': 0, 'chunk_ready_queue': 9, 'chunk_meshes': 5}
+   - draw.clear: 34.11ms
+   - draw.loading: 3.66ms
+16. update total=36.77ms context={'chunk': [0, 0], 'steps': 2, 'loaded_chunks': 121, 'visible_chunks': 47, 'active_chunks': 121, 'requested_chunks': 2, 'dirty_chunks': 39, 'chunk_futures': 2, 'mesh_futures': 1, 'mesh_ready_queue': 0, 'chunk_ready_queue': 2, 'chunk_meshes': 33}
+   - update.visible_chunks: 16.76ms
+   - world.visible.queue_mesh_rebuilds: 16.50ms
+   - world.visible.queue_requests: 0.05ms
+   - world.visible.compute_desired: 0.04ms
+   - update.motion_vector: 0.01ms
+17. draw total=35.57ms context={'loaded_chunks': 121, 'visible_chunks': 46, 'active_chunks': 121, 'requested_chunks': 0, 'dirty_chunks': 40, 'chunk_futures': 0, 'mesh_futures': 4, 'mesh_ready_queue': 2, 'chunk_ready_queue': 0, 'chunk_meshes': 42}
+   - draw.ui_batch: 16.66ms
+   - draw.set_2d: 11.03ms
+   - draw.hotbar_icons: 3.89ms
+   - draw.world_batch: 3.57ms
+   - draw.set_3d: 0.29ms
+18. update total=34.11ms context={'chunk': [-2, -1], 'steps': 2, 'loaded_chunks': 138, 'visible_chunks': 47, 'active_chunks': 121, 'requested_chunks': 2, 'dirty_chunks': 38, 'chunk_futures': 2, 'mesh_futures': 2, 'mesh_ready_queue': 0, 'chunk_ready_queue': 2, 'chunk_meshes': 38}
+   - update.visible_chunks: 27.82ms
+   - world.visible.unload_chunks: 18.82ms
+   - world.visible.queue_mesh_rebuilds: 8.84ms
+   - world.visible.queue_requests: 0.05ms
+   - world.visible.compute_desired: 0.03ms
+19. update total=32.57ms context={'chunk': [0, 0], 'steps': 2, 'loaded_chunks': 40, 'visible_chunks': 81, 'active_chunks': 121, 'requested_chunks': 9, 'dirty_chunks': 29, 'chunk_futures': 9, 'mesh_futures': 6, 'mesh_ready_queue': 0, 'chunk_ready_queue': 9, 'chunk_meshes': 5}
+   - update.visible_chunks: 32.56ms
+   - world.visible.upload_completed_meshes: 22.68ms
+   - world.mesh.upload.single: 22.51ms
+   - world.visible.queue_mesh_rebuilds: 6.13ms
+   - world.visible.apply_completed_chunks: 3.63ms
+20. draw total=32.32ms context={'loaded_chunks': 34, 'visible_chunks': 81, 'active_chunks': 121, 'requested_chunks': 9, 'dirty_chunks': 25, 'chunk_futures': 9, 'mesh_futures': 6, 'mesh_ready_queue': 0, 'chunk_ready_queue': 9, 'chunk_meshes': 3}
+   - draw.clear: 30.93ms
+   - draw.loading: 1.36ms
+21. draw total=32.19ms context={'loaded_chunks': 140, 'visible_chunks': 47, 'active_chunks': 121, 'requested_chunks': 0, 'dirty_chunks': 44, 'chunk_futures': 0, 'mesh_futures': 6, 'mesh_ready_queue': 2, 'chunk_ready_queue': 0, 'chunk_meshes': 40}
+   - draw.world_batch: 23.33ms
+   - draw.set_2d: 4.64ms
+   - draw.set_3d: 2.07ms
+   - draw.ui_batch: 1.01ms
+   - draw.hotbar_icons: 0.99ms
+22. update total=31.56ms context={'chunk': [-1, -1], 'steps': 2, 'loaded_chunks': 139, 'visible_chunks': 47, 'active_chunks': 121, 'requested_chunks': 0, 'dirty_chunks': 40, 'chunk_futures': 0, 'mesh_futures': 1, 'mesh_ready_queue': 0, 'chunk_ready_queue': 0, 'chunk_meshes': 38}
+   - update.visible_chunks: 15.25ms
+   - world.visible.queue_mesh_rebuilds: 8.65ms
+   - world.visible.unload_chunks: 6.42ms
+   - world.visible.compute_desired: 0.04ms
+   - world.visible.queue_requests: 0.01ms
+23. update total=30.63ms context={'chunk': [-2, -1], 'steps': 2, 'loaded_chunks': 139, 'visible_chunks': 47, 'active_chunks': 121, 'requested_chunks': 4, 'dirty_chunks': 38, 'chunk_futures': 4, 'mesh_futures': 3, 'mesh_ready_queue': 0, 'chunk_ready_queue': 4, 'chunk_meshes': 38}
+   - update.visible_chunks: 29.56ms
+   - world.visible.unload_chunks: 15.56ms
+   - world.visible.queue_mesh_rebuilds: 8.96ms
+   - world.visible.apply_completed_chunks: 4.87ms
+   - world.chunk.apply.single: 4.61ms
+24. update total=29.59ms context={'chunk': [-2, -1], 'steps': 2, 'loaded_chunks': 140, 'visible_chunks': 48, 'active_chunks': 121, 'requested_chunks': 0, 'dirty_chunks': 33, 'chunk_futures': 0, 'mesh_futures': 4, 'mesh_ready_queue': 2, 'chunk_ready_queue': 0, 'chunk_meshes': 44}
+   - update.visible_chunks: 15.41ms
+   - world.visible.queue_mesh_rebuilds: 14.13ms
+   - world.visible.upload_completed_meshes: 1.15ms
+   - world.mesh.upload.single: 1.09ms
+   - world.visible.compute_desired: 0.04ms
+25. update total=28.65ms context={'chunk': [-2, -1], 'steps': 2, 'loaded_chunks': 138, 'visible_chunks': 46, 'active_chunks': 121, 'requested_chunks': 2, 'dirty_chunks': 31, 'chunk_futures': 2, 'mesh_futures': 6, 'mesh_ready_queue': 0, 'chunk_ready_queue': 2, 'chunk_meshes': 40}
+   - update.visible_chunks: 27.86ms
+   - world.visible.unload_chunks: 11.61ms
+   - world.visible.queue_mesh_rebuilds: 10.74ms
+   - world.visible.apply_completed_chunks: 4.29ms
+   - world.chunk.apply.single: 4.16ms
+26. draw total=28.06ms context={'loaded_chunks': 121, 'visible_chunks': 47, 'active_chunks': 121, 'requested_chunks': 0, 'dirty_chunks': 40, 'chunk_futures': 0, 'mesh_futures': 0, 'mesh_ready_queue': 0, 'chunk_ready_queue': 0, 'chunk_meshes': 47}
+   - draw.ui_update: 24.81ms
+   - draw.world_batch: 1.34ms
+   - draw.hotbar_icons: 0.92ms
+   - draw.ui_batch: 0.45ms
+   - draw.set_3d: 0.23ms
+27. draw total=27.29ms context={'loaded_chunks': 140, 'visible_chunks': 48, 'active_chunks': 121, 'requested_chunks': 0, 'dirty_chunks': 35, 'chunk_futures': 0, 'mesh_futures': 4, 'mesh_ready_queue': 2, 'chunk_ready_queue': 0, 'chunk_meshes': 42}
+   - draw.ui_batch: 14.04ms
+   - draw.set_3d: 6.27ms
+   - draw.clear: 5.02ms
+   - draw.world_batch: 0.87ms
+   - draw.hotbar_icons: 0.76ms
+28. update total=27.12ms context={'chunk': [0, 0], 'steps': 2, 'loaded_chunks': 66, 'visible_chunks': 81, 'active_chunks': 121, 'requested_chunks': 9, 'dirty_chunks': 51, 'chunk_futures': 9, 'mesh_futures': 6, 'mesh_ready_queue': 0, 'chunk_ready_queue': 9, 'chunk_meshes': 9}
+   - update.visible_chunks: 27.10ms
+   - world.visible.upload_completed_meshes: 15.64ms
+   - world.mesh.upload.single: 15.57ms
+   - world.visible.queue_mesh_rebuilds: 6.73ms
+   - world.visible.apply_completed_chunks: 4.61ms
+29. draw total=27.01ms context={'loaded_chunks': 17, 'visible_chunks': 81, 'active_chunks': 121, 'requested_chunks': 8, 'dirty_chunks': 10, 'chunk_futures': 8, 'mesh_futures': 6, 'mesh_ready_queue': 0, 'chunk_ready_queue': 8, 'chunk_meshes': 1}
+   - draw.clear: 21.11ms
+   - draw.loading: 5.89ms
+30. update total=26.95ms context={'chunk': [-1, -1], 'steps': 2, 'loaded_chunks': 132, 'visible_chunks': 48, 'active_chunks': 121, 'requested_chunks': 9, 'dirty_chunks': 46, 'chunk_futures': 9, 'mesh_futures': 6, 'mesh_ready_queue': 0, 'chunk_ready_queue': 9, 'chunk_meshes': 31}
+   - update.visible_chunks: 23.82ms
+   - world.visible.queue_mesh_rebuilds: 15.69ms
+   - world.visible.apply_completed_chunks: 5.03ms
+   - world.chunk.apply.single: 4.69ms
+   - world.visible.upload_completed_meshes: 2.95ms
+31. update total=26.78ms context={'chunk': [-2, -1], 'steps': 2, 'loaded_chunks': 138, 'visible_chunks': 46, 'active_chunks': 121, 'requested_chunks': 2, 'dirty_chunks': 32, 'chunk_futures': 2, 'mesh_futures': 6, 'mesh_ready_queue': 0, 'chunk_ready_queue': 2, 'chunk_meshes': 39}
+   - update.visible_chunks: 26.08ms
+   - world.visible.unload_chunks: 13.87ms
+   - world.visible.queue_mesh_rebuilds: 8.87ms
+   - world.visible.upload_completed_meshes: 3.20ms
+   - world.mesh.upload.single: 2.96ms
+32. draw total=26.45ms context={'loaded_chunks': 24, 'visible_chunks': 81, 'active_chunks': 121, 'requested_chunks': 9, 'dirty_chunks': 16, 'chunk_futures': 9, 'mesh_futures': 6, 'mesh_ready_queue': 0, 'chunk_ready_queue': 9, 'chunk_meshes': 2}
+   - draw.clear: 24.32ms
+   - draw.loading: 2.11ms
+33. update total=26.03ms context={'chunk': [-1, -1], 'steps': 2, 'loaded_chunks': 126, 'visible_chunks': 47, 'active_chunks': 121, 'requested_chunks': 7, 'dirty_chunks': 43, 'chunk_futures': 7, 'mesh_futures': 4, 'mesh_ready_queue': 0, 'chunk_ready_queue': 7, 'chunk_meshes': 29}
+   - update.visible_chunks: 24.73ms
+   - world.visible.queue_mesh_rebuilds: 19.40ms
+   - world.visible.apply_completed_chunks: 5.18ms
+   - world.chunk.apply.single: 4.82ms
+   - world.visible.queue_requests: 0.04ms
+34. update total=25.98ms context={'chunk': [0, 0], 'steps': 2, 'loaded_chunks': 47, 'visible_chunks': 81, 'active_chunks': 121, 'requested_chunks': 9, 'dirty_chunks': 35, 'chunk_futures': 9, 'mesh_futures': 6, 'mesh_ready_queue': 0, 'chunk_ready_queue': 9, 'chunk_meshes': 6}
+   - update.visible_chunks: 25.96ms
+   - world.visible.upload_completed_meshes: 15.11ms
+   - world.mesh.upload.single: 15.03ms
+   - world.visible.queue_mesh_rebuilds: 6.80ms
+   - world.visible.apply_completed_chunks: 3.93ms
+35. draw total=25.51ms context={'loaded_chunks': 140, 'visible_chunks': 47, 'active_chunks': 121, 'requested_chunks': 0, 'dirty_chunks': 34, 'chunk_futures': 0, 'mesh_futures': 3, 'mesh_ready_queue': 1, 'chunk_ready_queue': 0, 'chunk_meshes': 43}
+   - draw.set_3d: 8.85ms
+   - draw.world_batch: 6.38ms
+   - draw.clear: 5.40ms
+   - draw.ui_batch: 2.59ms
+   - draw.set_2d: 1.46ms
+36. update total=25.32ms context={'chunk': [0, 0], 'steps': 2, 'loaded_chunks': 38, 'visible_chunks': 81, 'active_chunks': 121, 'requested_chunks': 9, 'dirty_chunks': 28, 'chunk_futures': 9, 'mesh_futures': 6, 'mesh_ready_queue': 0, 'chunk_ready_queue': 9, 'chunk_meshes': 4}
+   - update.visible_chunks: 25.30ms
+   - world.visible.queue_mesh_rebuilds: 20.63ms
+   - world.visible.apply_completed_chunks: 3.45ms
+   - world.chunk.apply.single: 3.30ms
+   - world.visible.upload_completed_meshes: 1.09ms
+37. update total=25.18ms context={'chunk': [-1, -1], 'steps': 2, 'loaded_chunks': 124, 'visible_chunks': 47, 'active_chunks': 121, 'requested_chunks': 5, 'dirty_chunks': 42, 'chunk_futures': 5, 'mesh_futures': 3, 'mesh_ready_queue': 0, 'chunk_ready_queue': 5, 'chunk_meshes': 30}
+   - update.visible_chunks: 23.53ms
+   - world.visible.queue_mesh_rebuilds: 13.16ms
+   - world.visible.apply_completed_chunks: 10.19ms
+   - world.chunk.apply.single: 9.63ms
+   - world.visible.queue_requests: 0.04ms
+38. update total=25.03ms context={'chunk': [-1, -1], 'steps': 2, 'loaded_chunks': 131, 'visible_chunks': 48, 'active_chunks': 121, 'requested_chunks': 9, 'dirty_chunks': 46, 'chunk_futures': 9, 'mesh_futures': 6, 'mesh_ready_queue': 1, 'chunk_ready_queue': 9, 'chunk_meshes': 30}
+   - update.visible_chunks: 24.24ms
+   - world.visible.queue_mesh_rebuilds: 12.13ms
+   - world.visible.upload_completed_meshes: 7.89ms
+   - world.mesh.upload.single: 7.74ms
+   - world.visible.apply_completed_chunks: 4.06ms
