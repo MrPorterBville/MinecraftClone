@@ -10,5 +10,10 @@
     "audio": {
         "step": "grass_step.wav",
         "break": "grass_break.wav"
-    }
+    },
+    "color": [
+        0.38,
+        0.62,
+        0.22
+    ]
 }

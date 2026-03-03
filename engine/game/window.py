@@ -5,7 +5,7 @@ import pyglet
 from pyglet import gl
 from pyglet.window import key, mouse
 
-from engine.blocks import SOLID_BLOCKS, get_block_color
+from engine.blocks import SOLID_BLOCKS, get_block_texture_for_face
 from engine.blocks.registry import TEXTURES_DIR
 from engine.constants import GRAVITY, JUMP_SPEED, PLAYER_HEIGHT, TERMINAL_VELOCITY, TICKS_PER_SECOND, WALK_SPEED
 from engine.debug.profiler import RuntimeProfiler
@@ -74,7 +74,9 @@ class GameWindow(pyglet.window.Window):
         self._hotbar_y = 24
         self._hotbar_backgrounds: list[pyglet.shapes.Rectangle] = []
         self._hotbar_borders: list[pyglet.shapes.BorderedRectangle] = []
-        self._hotbar_icons: list[pyglet.shapes.Rectangle] = []
+        self._hotbar_icon_sprites: list[pyglet.sprite.Sprite | None] = []
+        self._hotbar_icon_blocks: list[str | None] = []
+        self._hotbar_texture_cache: dict[str, pyglet.image.AbstractImage] = {}
         self._hotbar_counts: list[pyglet.text.Label] = []
         self._build_hotbar_ui()
         self._show_atlas = False
@@ -328,16 +330,8 @@ class GameWindow(pyglet.window.Window):
             border.opacity = 0
             self._hotbar_borders.append(border)
 
-            icon = pyglet.shapes.Rectangle(
-                x + 10,
-                y + 10,
-                slot_size - 20,
-                slot_size - 20,
-                color=(255, 255, 255),
-                batch=self.ui_batch,
-            )
-            icon.opacity = 0
-            self._hotbar_icons.append(icon)
+            self._hotbar_icon_sprites.append(None)
+            self._hotbar_icon_blocks.append(None)
 
             count = pyglet.text.Label(
                 "",
@@ -365,25 +359,61 @@ class GameWindow(pyglet.window.Window):
             self._hotbar_borders[i].x = x
             self._hotbar_borders[i].y = y
 
-            self._hotbar_icons[i].x = x + 10
-            self._hotbar_icons[i].y = y + 10
             self._hotbar_counts[i].x = x + slot_size - 5
             self._hotbar_counts[i].y = y + 4
+
+    def _hotbar_texture_image(self, block: str) -> pyglet.image.AbstractImage | None:
+        texture_name = get_block_texture_for_face(block, 2) or get_block_texture_for_face(block, 4)
+        if texture_name is None:
+            return None
+        cached = self._hotbar_texture_cache.get(texture_name)
+        if cached is not None:
+            return cached
+        path = TEXTURES_DIR / texture_name
+        if not path.is_file():
+            return None
+        image = pyglet.image.load(str(path))
+        self._hotbar_texture_cache[texture_name] = image
+        return image
 
     def _update_hotbar_ui(self) -> None:
         for i in range(self.inventory.HOTBAR_SIZE):
             self._hotbar_borders[i].border_color = (255, 255, 255) if i == self.inventory.selected else (120, 120, 120)
 
             slot = self.inventory.slot(i)
+            sprite = self._hotbar_icon_sprites[i]
             if slot is None:
-                self._hotbar_icons[i].opacity = 0
+                if sprite is not None:
+                    sprite.visible = False
+                self._hotbar_icon_blocks[i] = None
                 self._hotbar_counts[i].text = ""
                 continue
 
             block, count = slot
-            #self._hotbar_icons[i].opacity = 255
-            #self._hotbar_icons[i].color = self._shade_color(get_block_color(block), 1.0)
             self._hotbar_counts[i].text = str(count)
+
+            image = self._hotbar_texture_image(block)
+            if image is None:
+                if sprite is not None:
+                    sprite.visible = False
+                self._hotbar_icon_blocks[i] = block
+                continue
+
+            if sprite is None:
+                sprite = pyglet.sprite.Sprite(image, x=0, y=0, batch=self.ui_batch)
+                self._hotbar_icon_sprites[i] = sprite
+            elif self._hotbar_icon_blocks[i] != block:
+                sprite.image = image
+
+            bg = self._hotbar_backgrounds[i]
+            target_size = bg.width - 14
+            sprite.scale_x = target_size / float(sprite.image.width)
+            sprite.scale_y = target_size / float(sprite.image.height)
+            sprite.x = bg.x + (bg.width - sprite.width) / 2
+            sprite.y = bg.y + (bg.height - sprite.height) / 2
+            sprite.opacity = 255
+            sprite.visible = True
+            self._hotbar_icon_blocks[i] = block
 
     def on_resize(self, width, height):
         super().on_resize(width, height)
@@ -443,22 +473,6 @@ class GameWindow(pyglet.window.Window):
             with self.profiler.section("draw.ui_batch"):
                 self.ui_batch.draw()
 
-            # --- 3. Draw 3D Hotbar Icons ---
-            # We draw these after the UI batch so they sit on top of the backgrounds
-            with self.profiler.section("draw.hotbar_icons"):
-                #gl.glEnable(gl.GL_DEPTH_TEST)
-                # Clear depth so the small cubes don't "hide" behind world blocks
-                #gl.glClear(gl.GL_DEPTH_BUFFER_BIT) 
-                
-                for i in range(self.inventory.HOTBAR_SIZE):
-                    slot = self.inventory.slot(i)
-                    if slot:
-                        block_name, _ = slot
-                        bg = self._hotbar_backgrounds[i]
-                        # Render the cube centered in the slot
-                        self._draw_3d_cube_icon(bg.x, bg.y, bg.width, block_name)
-                
-                #gl.glDisable(gl.GL_DEPTH_TEST)
 
         finally:
             self.profiler.end_frame(extra_context=self.world.diagnostics_snapshot())
@@ -472,11 +486,3 @@ class GameWindow(pyglet.window.Window):
         self.world.shutdown()
         super().on_close()
 
-
-    def _draw_3d_cube_icon(self, x: float, y: float, size: float, block_name: str):
-        r = self.world.renderer
-        cx = x + size / 2
-        cy = y + size / 2
-        scale = size * 0.4
-
-        r.draw_single_block(block_name, cx=cx, cy=cy, scale=scale)
