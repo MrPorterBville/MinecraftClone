@@ -1,0 +1,10 @@
+{
+    "id": "minecraft:Stone_Block",
+    "name": "Stone",
+    "hardness": 1,
+    "textures": "stone.png",
+    "audio": {
+        "step": "grass_step.wav",
+        "break": "grass_break.wav"
+    }
+}

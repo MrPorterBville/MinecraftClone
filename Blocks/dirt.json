@@ -1,0 +1,10 @@
+{
+    "id": "minecraft:Dirt_Block",
+    "name": "Dirt",
+    "hardness": 0.6,
+    "textures": "dirt.png",
+    "audio": {
+        "step": "grass_step.wav",
+        "break": "grass_break.wav"
+    }
+}

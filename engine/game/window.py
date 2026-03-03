@@ -13,6 +13,56 @@ from engine.gameplay.inventory import Inventory
 from engine.graphics.rendering import set_2d, set_3d
 from engine.world.world import World
 
+def mat4_identity():
+    return [
+        1,0,0,0,
+        0,1,0,0,
+        0,0,1,0,
+        0,0,0,1,
+    ]
+
+def mat4_mul(a, b):
+    out = [0]*16
+    for r in range(4):
+        for c in range(4):
+            out[r*4+c] = sum(
+                a[r*4+k] * b[k*4+c] for k in range(4)
+            )
+    return out
+
+def mat4_translate(x, y, z):
+    m = mat4_identity()
+    m[12], m[13], m[14] = x, y, z
+    return m
+
+def mat4_scale(sx, sy, sz):
+    return [
+        sx,0,0,0,
+        0,sy,0,0,
+        0,0,sz,0,
+        0,0,0,1,
+    ]
+
+def mat4_rotate_x(deg):
+    r = math.radians(deg)
+    c, s = math.cos(r), math.sin(r)
+    return [
+        1,0,0,0,
+        0,c,s,0,
+        0,-s,c,0,
+        0,0,0,1,
+    ]
+
+def mat4_rotate_y(deg):
+    r = math.radians(deg)
+    c, s = math.cos(r), math.sin(r)
+    return [
+        c,0,-s,0,
+        0,1,0,0,
+        s,0,c,0,
+        0,0,0,1,
+    ]
+
 
 class GameWindow(pyglet.window.Window):
     CHUNK_STREAM_UPDATE_INTERVAL_SECONDS = 1.0 / 20.0
@@ -382,8 +432,8 @@ class GameWindow(pyglet.window.Window):
                 continue
 
             block, count = slot
-            self._hotbar_icons[i].opacity = 255
-            self._hotbar_icons[i].color = self._shade_color(get_block_color(block), 1.0)
+            #self._hotbar_icons[i].opacity = 255
+            #self._hotbar_icons[i].color = self._shade_color(get_block_color(block), 1.0)
             self._hotbar_counts[i].text = str(count)
 
     def on_resize(self, width, height):
@@ -420,27 +470,47 @@ class GameWindow(pyglet.window.Window):
                     self.clear()
                 with self.profiler.section("draw.loading"):
                     set_2d(self)
-                    gl.glDisable(gl.GL_CULL_FACE)
-                    self._loading_texture.blit_tiled(0, 0, 0, self.width, self.height)
+                    #gl.glDisable(gl.GL_CULL_FACE)
                     self._loading_label.draw()
                 return
 
             with self.profiler.section("draw.clear"):
                 self.clear()
+
+            # --- 1. Draw 3D World ---
             with self.profiler.section("draw.set_3d"):
                 set_3d(self, self.rotation, self.position)
-                gl.glEnable(gl.GL_CULL_FACE)
-                gl.glCullFace(gl.GL_BACK)
+                #gl.glEnable(gl.GL_CULL_FACE)
+                #gl.glCullFace(gl.GL_BACK)
             with self.profiler.section("draw.world_batch"):
                 self.world.batch.draw()
 
+            # --- 2. Draw 2D UI (Backgrounds and Labels) ---
             with self.profiler.section("draw.set_2d"):
                 set_2d(self)
-                gl.glDisable(gl.GL_CULL_FACE)
+                #gl.glDisable(gl.GL_CULL_FACE)
             with self.profiler.section("draw.ui_update"):
                 self._update_hotbar_ui()
             with self.profiler.section("draw.ui_batch"):
                 self.ui_batch.draw()
+
+            # --- 3. Draw 3D Hotbar Icons ---
+            # We draw these after the UI batch so they sit on top of the backgrounds
+            with self.profiler.section("draw.hotbar_icons"):
+                #gl.glEnable(gl.GL_DEPTH_TEST)
+                # Clear depth so the small cubes don't "hide" behind world blocks
+                #gl.glClear(gl.GL_DEPTH_BUFFER_BIT) 
+                
+                for i in range(self.inventory.HOTBAR_SIZE):
+                    slot = self.inventory.slot(i)
+                    if slot:
+                        block_name, _ = slot
+                        bg = self._hotbar_backgrounds[i]
+                        # Render the cube centered in the slot
+                        self._draw_3d_cube_icon(bg.x, bg.y, bg.width, block_name)
+                
+                #gl.glDisable(gl.GL_DEPTH_TEST)
+
         finally:
             self.profiler.end_frame(extra_context=self.world.diagnostics_snapshot())
 
@@ -452,3 +522,26 @@ class GameWindow(pyglet.window.Window):
             print(f"[profiler] wrote lag report: {json_path}")
         self.world.shutdown()
         super().on_close()
+
+
+    def _draw_3d_cube_icon(self, x: float, y: float, size: float, block_name: str):
+        r = self.world.renderer
+
+        # Convert screen-space to clip-ish space
+        cx = x + size / 2
+        cy = y + size / 2
+        scale = size * 0.4
+
+        model = mat4_identity()
+        model = mat4_mul(model, mat4_translate(cx, cy, -20))
+        model = mat4_mul(model, mat4_scale(scale, scale, scale))
+        model = mat4_mul(model, mat4_rotate_x(30))
+        model = mat4_mul(model, mat4_rotate_y(45))
+
+        # Enable depth properly
+        gl.glEnable(gl.GL_DEPTH_TEST)
+
+        # Override model matrix ONLY for this draw
+        r.push_model_override(model)
+        r.draw_single_block(block_name)
+        r.pop_model_override()

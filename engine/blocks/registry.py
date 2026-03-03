@@ -1,8 +1,7 @@
 from __future__ import annotations
-
+import json
 from dataclasses import dataclass
 from pathlib import Path
-
 
 @dataclass(frozen=True)
 class BlockDefinition:
@@ -10,110 +9,105 @@ class BlockDefinition:
     solid: bool
     breakable: bool
     color: tuple[float, float, float]
-    texture: str | None
-    texture_top: str | None
-    texture_bottom: str | None
-    texture_side: str | None
-
+    # index 0:+X, 1:-X, 2:+Y, 3:-Y, 4:+Z, 5:-Z
+    face_textures: dict[int, str | None]
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 BLOCKS_DIR = PROJECT_ROOT / "Blocks"
 TEXTURES_DIR = BLOCKS_DIR / "Textures"
 
+def _load_block_json(path: Path) -> BlockDefinition:
+    with open(path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
 
-def _parse_bool(value: str) -> bool:
-    return value.strip().lower() in {"1", "true", "yes", "on"}
-
-
-def _parse_color(value: str) -> tuple[float, float, float]:
-    parts = [p.strip() for p in value.split(",")]
-    if len(parts) != 3:
-        raise ValueError("color must have 3 comma-separated components")
-
-    raw = [float(p) for p in parts]
-    if any(c > 1.0 for c in raw):
-        raw = [c / 255.0 for c in raw]
-
-    return tuple(max(0.0, min(1.0, c)) for c in raw)  # type: ignore[return-value]
-
-
-def _load_block_file(path: Path) -> BlockDefinition:
-    data: dict[str, str] = {}
-    for line in path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        data[key.strip().lower()] = value.strip()
-
+    # Normalize name and properties
     name = data.get("name", path.stem)
-    solid = _parse_bool(data.get("solid", "true"))
-    breakable = _parse_bool(data.get("breakable", "true"))
-    color = _parse_color(data.get("color", "1.0,0.0,1.0"))
-    texture = data.get("texture")
-    texture_top = data.get("texture_top")
-    texture_bottom = data.get("texture_bottom")
-    texture_side = data.get("texture_side")
+    solid = data.get("solid", True)
+    breakable = data.get("breakable", True)
+    
+    raw_color = data.get("color", [1.0, 0.0, 1.0])
+    color = tuple(raw_color[:3])
+
+    # --- Robust Texture Handling ---
+    tex_input = data.get("textures", {})
+    
+    if isinstance(tex_input, str):
+        # Case 1: "textures": "stone.png" -> apply to all sides
+        all_tex = tex_input
+        side_tex = tex_input
+        tex_dict = {} 
+    else:
+        # Case 2: "textures": {"all": "stone.png", "top": "grass.png"}
+        tex_dict = tex_input
+        all_tex = tex_dict.get("all")
+        side_tex = tex_dict.get("side", all_tex)
+    
+    face_map = {
+        0: tex_dict.get("right", side_tex),
+        1: tex_dict.get("left", side_tex),
+        2: tex_dict.get("top", all_tex),
+        3: tex_dict.get("bottom", all_tex),
+        4: tex_dict.get("front", side_tex),
+        5: tex_dict.get("back", side_tex)
+    }
 
     return BlockDefinition(
         name=name,
         solid=solid,
         breakable=breakable,
         color=color,
-        texture=texture,
-        texture_top=texture_top,
-        texture_bottom=texture_bottom,
-        texture_side=texture_side,
+        face_textures=face_map
     )
-
 
 def load_block_definitions() -> dict[str, BlockDefinition]:
     definitions: dict[str, BlockDefinition] = {}
-    if BLOCKS_DIR.is_dir():
-        for path in sorted(BLOCKS_DIR.glob("*.txt")):
-            block = _load_block_file(path)
-            definitions[block.name] = block
+    
+    # DIAGNOSTIC 1: Where are we looking?
+    #print(f"--- Registry Search ---")
+    #print(f"Looking in: {BLOCKS_DIR.absolute()}")
+    #print(f"Directory exists: {BLOCKS_DIR.is_dir()}")
 
+    if BLOCKS_DIR.is_dir():
+        json_files = list(BLOCKS_DIR.glob("*.json"))
+        # DIAGNOSTIC 2: Did we find files?
+        #print(f"Found {len(json_files)} .json files")
+        
+        for path in sorted(json_files):
+            block = _load_block_json(path)
+            block_id = block.name.lower()
+            definitions[block_id] = block
+            #print(f"Successfully registered: {block.name}")
+
+    if not definitions:
+        print("!!! WARNING: No block definitions were loaded!")
+        
     return definitions
 
-
+# --- Registry Initialization ---
 BLOCKS = load_block_definitions()
-SOLID_BLOCKS = {name for name, block in BLOCKS.items() if block.solid}
+SOLID_BLOCKS = {name.lower() for name, block in BLOCKS.items() if block.solid}
+#print(f"Registry initialized. Loaded {len(BLOCKS)} blocks. Solid blocks: {SOLID_BLOCKS}")
 
+# --- Helper Functions for the Renderer ---
+
+def get_block_texture_for_face(name: str, face_index: int) -> str | None:
+    #print(f'Getting Texture Name: {name}, {face_index}')
+    block = BLOCKS.get(name)
+    if not block:
+        #print(f'{block} not found.')
+        return None
+    
+    texture_name = block.face_textures.get(face_index)
+    
+    if texture_name and (TEXTURES_DIR / texture_name).is_file():
+        #print(f'{block} found: {texture_name}.')
+        return texture_name
+    #print(f'System Failure.')
+    return None
 
 def get_block_color(name: str) -> tuple[float, float, float]:
     block = BLOCKS.get(name)
-    if block is None:
-        return 1.0, 0.0, 1.0
-    # Texture rendering can use block.texture when present.
-    # If texture is missing, fall back to the solid color from the block file.
-    return block.color
-
+    return block.color if block else (1.0, 0.0, 1.0)
 
 def get_block_definition(name: str) -> BlockDefinition | None:
     return BLOCKS.get(name)
-
-
-def get_block_texture_for_face(name: str, face_index: int) -> str | None:
-    block = BLOCKS.get(name)
-    if block is None:
-        return None
-
-    candidates: list[str] = []
-    if face_index == 2 and block.texture_top:
-        candidates.append(block.texture_top)
-    elif face_index == 3 and block.texture_bottom:
-        candidates.append(block.texture_bottom)
-    elif face_index in (0, 1, 4, 5) and block.texture_side:
-        candidates.append(block.texture_side)
-
-    if block.texture:
-        candidates.append(block.texture)
-
-    for texture_name in candidates:
-        if (TEXTURES_DIR / texture_name).is_file():
-            return texture_name
-
-    return None

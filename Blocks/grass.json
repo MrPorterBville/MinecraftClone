@@ -1,0 +1,14 @@
+{
+    "id": "minecraft:Grass_Block",
+    "name": "Grass",
+    "hardness": 0.6,
+    "textures": {
+        "top": "grass_top.png",
+        "bottom": "dirt.png",
+        "side": "grass_side.png"
+    },
+    "audio": {
+        "step": "grass_step.wav",
+        "break": "grass_break.wav"
+    }
+}

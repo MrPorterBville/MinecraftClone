@@ -1,0 +1,10 @@
+{
+    "id": "minecraft:Bedrock_Block",
+    "name": "Bedrock",
+    "hardness": 1,
+    "textures": "bedrock.png",
+    "audio": {
+        "step": "grass_step.wav",
+        "break": "grass_break.wav"
+    }
+}

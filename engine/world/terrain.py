@@ -61,7 +61,7 @@ class TerrainGenerator:
 
     def height_at(self, x: int, z: int) -> int:
         frequency = 1.0 / self.scale
-        amplitude = 1.0
+        amplitude = 2.0
         noise_sum = 0.0
         max_amplitude = 0.0
 
