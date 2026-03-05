@@ -10,6 +10,11 @@ from engine.blocks import get_block_color, get_block_texture_for_face
 from engine.blocks.registry import BLOCKS, TEXTURES_DIR
 from engine.constants import Vec3
 
+try:
+    import minecraftclone_native  # type: ignore
+except Exception:
+    minecraftclone_native = None
+
 
 class RenderedCube:
     def __init__(self, parts: list[pyglet.graphics.vertexdomain.VertexList]) -> None:
@@ -117,6 +122,17 @@ void main()
         self._texture_array_shader: pyglet.graphics.shader.ShaderProgram | None = None
         self._texture_array_shader_group: pyglet.graphics.ShaderGroup | None = None
         self._texture_array_group: TextureArrayGroup | None = None
+        self._native_build_chunk_mesh_data = (
+            getattr(minecraftclone_native, "build_chunk_mesh_data_native", None)
+            if minecraftclone_native is not None
+            else None
+        )
+        self._native_meshing_failed = False
+        self._native_block_face_textures = {
+            block_name: [get_block_texture_for_face(block_name, face) for face in range(6)]
+            for block_name in BLOCKS.keys()
+        }
+        self._native_block_colors = {block_name: get_block_color(block_name) for block_name in BLOCKS.keys()}
         self._build_texture_atlas()
         self._export_texture_atlas()
         if self.use_texture_array:
@@ -534,6 +550,33 @@ void main()
         blocks: dict[Vec3, str],
         solid_blocks: set[str],
     ) -> ChunkMeshData:
+        if self._native_build_chunk_mesh_data is not None and not self._native_meshing_failed:
+            try:
+                (
+                    color_vertices,
+                    color_values,
+                    textured_vertices,
+                    textured_texcoords,
+                    textured_colors,
+                ) = self._native_build_chunk_mesh_data(
+                    list(positions),
+                    blocks,
+                    solid_blocks,
+                    self._native_block_face_textures,
+                    self._native_block_colors,
+                    self.use_texture_array,
+                )
+                return ChunkMeshData(
+                    color_vertices=color_vertices,
+                    color_values=color_values,
+                    textured_vertices=textured_vertices,
+                    textured_texcoords=textured_texcoords,
+                    textured_colors=textured_colors,
+                )
+            except Exception:
+                # Keep gameplay working if native meshing is unavailable/mismatched.
+                self._native_meshing_failed = True
+
         color_vertices: list[float] = []
         color_values: list[float] = []
         textured_vertices: dict[str, list[float]] = {}

@@ -29,11 +29,19 @@ This project is a pure-Python voxel sandbox inspired by classic Minecraft, using
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate
 pip install -r requirements.txt
-python minecraft_clone.py
+python main.py
 ```
+
+In VS Code, set the interpreter to `.venv` so Run/F5 launches with the correct environment.
 
 ## Notes
 
 This is intentionally implemented in Python for game logic and world simulation, while rendering is handled by OpenGL on the GPU.
+
+## Rust Terrain Kernel
+
+Terrain generation is compiled in Rust and loaded as a Python extension.
+
+- Source: [`engine/world/_terrain_native/`](engine/world/_terrain_native/)
+- Build docs: [`engine/world/_terrain_native/README.md`](engine/world/_terrain_native/README.md)

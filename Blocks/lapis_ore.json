@@ -1,0 +1,9 @@
+{
+  "name": "lapis_ore",
+  "solid": true,
+  "breakable": true,
+  "color": [0.18, 0.35, 0.88],
+  "textures": {
+    "all": null
+  }
+}

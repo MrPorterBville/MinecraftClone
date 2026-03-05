@@ -17,6 +17,7 @@ class GameWindow(pyglet.window.Window):
     CHUNK_STREAM_UPDATE_INTERVAL_SECONDS = 1.0 / 20.0
     CHUNK_STREAM_UPDATE_INTERVAL_OVER_CAP_SECONDS = 1.0 / 8.0
     FRAME_CATCHUP_THRESHOLD_MS = 20.0
+    LOADING_REQUIRED_RADIUS_CHUNKS = 1
 
     def __init__(self, seed: int = 90125, use_texture_array: bool = False):
         super().__init__(width=1280, height=720, caption="Python Minecraft Clone", resizable=True)
@@ -24,13 +25,13 @@ class GameWindow(pyglet.window.Window):
         self.profiler = RuntimeProfiler(enabled=True, slow_frame_ms=25.0, max_slow_frames=500)
         self.profiler.clear_previous_reports("profiling")
         self.world = World(seed=seed, flat_height=64, profiler=self.profiler, use_texture_array=use_texture_array)
-        self.world.prime_chunks((0.0, 0.0, 0.0), radius_chunks=1)
-        self.world.update_visible_chunks((0.0, 0.0, 0.0))
 
         self.inventory = Inventory()
-
-        spawn_y = float(self.world.height_at(0, 0) + 2)
+        startBiome = self.world.biome_at(0,0)
+        spawn_y = float(self.world.height_at(0, 0, startBiome) + 2)
         self.position = (0.0, spawn_y, 0.0)
+        self.world.prime_chunks(self.position, radius_chunks=self.LOADING_REQUIRED_RADIUS_CHUNKS)
+        self.world.update_visible_chunks(self.position)
         self.rotation = (0.0, -25.0)
         self.dy = 0.0
         self._chunk_stream_timer = 0.0
@@ -82,8 +83,10 @@ class GameWindow(pyglet.window.Window):
         self._show_atlas = False
 
         self._loading = True
-        center_chunk = self.world.chunk_coords(self.position[0], self.position[2])
-        self._loading_required_chunks = self._chunks_in_radius(center_chunk, self.world.VISIBLE_RADIUS_CHUNKS)
+        self._loading_required_chunks = self.world.loading_chunks_in_radius(
+            self.position,
+            self.LOADING_REQUIRED_RADIUS_CHUNKS,
+        )
         self._loading_texture = pyglet.image.TileableTexture.create_for_image(
             pyglet.image.load(str(TEXTURES_DIR / "dirt.png"))
         )
@@ -158,7 +161,7 @@ class GameWindow(pyglet.window.Window):
             if self._loading:
                 with self.profiler.section("update.visible_chunks"):
                     self.world.update_visible_chunks(self.position)
-                if self.world.are_chunks_rendered(self._loading_required_chunks):
+                if self.world.are_chunks_generated(self._loading_required_chunks):
                     self._loading = False
                 return
 
@@ -233,6 +236,10 @@ class GameWindow(pyglet.window.Window):
                         break
         return tuple(p)
 
+    def _player_occupied_blocks(self) -> set[tuple[int, int, int]]:
+        px, py, pz = self.world.normalize(self.position)
+        return {(px, py - dy, pz) for dy in range(PLAYER_HEIGHT)}
+
     def on_mouse_press(self, x, y, button, modifiers):
         if self._loading:
             return
@@ -243,6 +250,8 @@ class GameWindow(pyglet.window.Window):
         vector = self.get_sight_vector()
         block, previous = self.world.hit_test(self.position, vector)
         if button == mouse.RIGHT and previous:
+            if previous in self._player_occupied_blocks():
+                return
             held = self.inventory.selected_block()
             if held and self.inventory.remove_selected(1):
                 self.world.add_block(previous, held)
@@ -276,6 +285,10 @@ class GameWindow(pyglet.window.Window):
             self._show_atlas = not self._show_atlas
             return
         if self._loading:
+            return
+        if symbol == key.C:
+            self.world.hide_surface_layer = not self.world.hide_surface_layer
+            self.world.rebuild_visible()
             return
         if symbol == key.SPACE and self.dy == 0:
             self.dy = JUMP_SPEED
@@ -322,7 +335,7 @@ class GameWindow(pyglet.window.Window):
                 y,
                 slot_size,
                 slot_size,
-                border=2,
+                border=5,
                 color=(0, 0, 0),
                 border_color=(120, 120, 120),
                 batch=self.ui_batch,
@@ -378,7 +391,10 @@ class GameWindow(pyglet.window.Window):
 
     def _update_hotbar_ui(self) -> None:
         for i in range(self.inventory.HOTBAR_SIZE):
-            self._hotbar_borders[i].border_color = (255, 255, 255) if i == self.inventory.selected else (120, 120, 120)
+            is_selected = i == self.inventory.selected
+            self._hotbar_borders[i].border_color = (255, 255, 255) if is_selected else (120, 120, 120)
+            self._hotbar_borders[i].opacity = 255 if is_selected else 200
+            self._hotbar_backgrounds[i].opacity = 230 if is_selected else 180
 
             slot = self.inventory.slot(i)
             sprite = self._hotbar_icon_sprites[i]

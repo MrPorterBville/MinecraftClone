@@ -1,0 +1,9 @@
+{
+  "name": "redstone_ore",
+  "solid": true,
+  "breakable": true,
+  "color": [0.82, 0.20, 0.20],
+  "textures": {
+    "all": null
+  }
+}

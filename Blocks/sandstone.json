@@ -1,0 +1,19 @@
+{
+    "id": "minecraft:Sandstone_Block",
+    "name": "sandstone",
+    "hardness": 0.6,
+    "textures": {
+        "top": "sandstone_top.png",
+        "bottom": "sandstone_top.png",
+        "side": "sandstone_side.png"
+    },
+    "audio": {
+        "step": "grass_step.wav",
+        "break": "grass_break.wav"
+    },
+    "color": [
+        0.38,
+        0.62,
+        0.22
+    ]
+}

@@ -1,0 +1,68 @@
+[
+  {
+    "name": "coal",
+    "block": "coal_ore",
+    "enabled": true,
+    "replace": ["stone"],
+    "veins_per_chunk": 18,
+    "vein_size": 14,
+    "min_y": 0,
+    "max_y": 128,
+    "discard_on_air_chance": 0.2
+  },
+  {
+    "name": "iron",
+    "block": "iron_ore",
+    "enabled": true,
+    "replace": ["stone"],
+    "veins_per_chunk": 10,
+    "vein_size": 9,
+    "min_y": -32,
+    "max_y": 80,
+    "discard_on_air_chance": 0.25
+  },
+  {
+    "name": "gold",
+    "block": "gold_ore",
+    "enabled": true,
+    "replace": ["stone"],
+    "veins_per_chunk": 3,
+    "vein_size": 8,
+    "min_y": -64,
+    "max_y": 32,
+    "discard_on_air_chance": 0.35
+  },
+  {
+    "name": "lapis",
+    "block": "lapis_ore",
+    "enabled": true,
+    "replace": ["stone"],
+    "veins_per_chunk": 3,
+    "vein_size": 7,
+    "min_y": -32,
+    "max_y": 32,
+    "discard_on_air_chance": 0.25
+  },
+  {
+    "name": "redstone",
+    "block": "redstone_ore",
+    "enabled": true,
+    "replace": ["stone"],
+    "veins_per_chunk": 6,
+    "vein_size": 8,
+    "min_y": -64,
+    "max_y": 16,
+    "discard_on_air_chance": 0.3
+  },
+  {
+    "name": "diamond",
+    "block": "diamond_ore",
+    "enabled": true,
+    "replace": ["stone"],
+    "veins_per_chunk": 3,
+    "vein_size": 7,
+    "min_y": -64,
+    "max_y": 16,
+    "discard_on_air_chance": 0.4
+  }
+]

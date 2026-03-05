@@ -1,0 +1,9 @@
+{
+  "name": "diamond_ore",
+  "solid": true,
+  "breakable": true,
+  "color": [0.20, 0.84, 0.88],
+  "textures": {
+    "all": null
+  }
+}

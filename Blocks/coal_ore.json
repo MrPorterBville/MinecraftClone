@@ -1,0 +1,9 @@
+{
+  "name": "coal_ore",
+  "solid": true,
+  "breakable": true,
+  "color": [0.25, 0.25, 0.25],
+  "textures": {
+    "all": null
+  }
+}

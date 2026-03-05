@@ -1,0 +1,9 @@
+{
+  "name": "gold_ore",
+  "solid": true,
+  "breakable": true,
+  "color": [0.90, 0.78, 0.28],
+  "textures": {
+    "all": null
+  }
+}
