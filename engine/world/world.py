@@ -3,6 +3,7 @@ import time
 import json
 import heapq
 import os
+import random
 from concurrent.futures import Future, ThreadPoolExecutor
 from contextlib import nullcontext
 from collections import OrderedDict
@@ -11,7 +12,7 @@ from typing import Protocol
 
 import pyglet
 
-from engine.blocks import SOLID_BLOCKS, get_block_definition
+from engine.blocks import OCCLUDING_BLOCKS, SOLID_BLOCKS, get_block_definition
 from engine.constants import SECTOR_SIZE, Vec3
 from engine.debug.profiler import RuntimeProfiler
 from engine.graphics.block_renderer import BlockRenderer, ChunkMeshData
@@ -91,6 +92,13 @@ _WORLD_GEN_DEFAULTS: dict[str, int | float | bool] = {
     "PLAINS_DIRT_MIN_Y": 18,
     "PLAINS_SANDSTONE_NOISE_THRESHOLD": -0.65,
     "PLAINS_SANDSTONE_MAX_Y": 20,
+    "TREE_ENABLED": True,
+    "TREE_ATTEMPTS_PER_CHUNK": 3,
+    "TREE_CHANCE_PER_ATTEMPT": 0.55,
+    "TREE_MIN_TRUNK_HEIGHT": 4,
+    "TREE_MAX_TRUNK_HEIGHT": 6,
+    "TREE_CANOPY_RADIUS": 2,
+    "TREE_MIN_SPACING": 4,
 }
 _WORLD_GEN_SECTIONS: dict[str, tuple[str, ...]] = {
     "world": (
@@ -175,6 +183,15 @@ _WORLD_GEN_SECTIONS: dict[str, tuple[str, ...]] = {
         "PLAINS_DIRT_MIN_Y",
         "PLAINS_SANDSTONE_NOISE_THRESHOLD",
         "PLAINS_SANDSTONE_MAX_Y",
+    ),
+    "vegetation": (
+        "TREE_ENABLED",
+        "TREE_ATTEMPTS_PER_CHUNK",
+        "TREE_CHANCE_PER_ATTEMPT",
+        "TREE_MIN_TRUNK_HEIGHT",
+        "TREE_MAX_TRUNK_HEIGHT",
+        "TREE_CANOPY_RADIUS",
+        "TREE_MIN_SPACING",
     ),
 }
 _WORLD_GEN_SETTINGS_PATH = os.path.join(os.path.dirname(__file__), "world_gen_settings.json")
@@ -398,6 +415,13 @@ class World:
     PLAINS_DIRT_MIN_Y = int(_WORLD_SETTINGS["PLAINS_DIRT_MIN_Y"])
     PLAINS_SANDSTONE_NOISE_THRESHOLD = float(_WORLD_SETTINGS["PLAINS_SANDSTONE_NOISE_THRESHOLD"])
     PLAINS_SANDSTONE_MAX_Y = int(_WORLD_SETTINGS["PLAINS_SANDSTONE_MAX_Y"])
+    TREE_ENABLED = bool(_WORLD_SETTINGS["TREE_ENABLED"])
+    TREE_ATTEMPTS_PER_CHUNK = int(_WORLD_SETTINGS["TREE_ATTEMPTS_PER_CHUNK"])
+    TREE_CHANCE_PER_ATTEMPT = float(_WORLD_SETTINGS["TREE_CHANCE_PER_ATTEMPT"])
+    TREE_MIN_TRUNK_HEIGHT = int(_WORLD_SETTINGS["TREE_MIN_TRUNK_HEIGHT"])
+    TREE_MAX_TRUNK_HEIGHT = int(_WORLD_SETTINGS["TREE_MAX_TRUNK_HEIGHT"])
+    TREE_CANOPY_RADIUS = int(_WORLD_SETTINGS["TREE_CANOPY_RADIUS"])
+    TREE_MIN_SPACING = int(_WORLD_SETTINGS["TREE_MIN_SPACING"])
     script_dir = os.path.dirname(__file__)
     json_path = os.path.join(script_dir, "..", "biomes", "biomes.json")
     json_path = os.path.normpath(json_path)
@@ -649,7 +673,7 @@ class World:
         if version == 0:
             version = 1
             self._mesh_chunk_versions[chunk] = version
-        future = self._mesh_executor.submit(self.renderer.build_chunk_mesh_data, positions, block_sample, SOLID_BLOCKS)
+        future = self._mesh_executor.submit(self.renderer.build_chunk_mesh_data, positions, block_sample, OCCLUDING_BLOCKS)
         self._mesh_futures[chunk] = future
         self._mesh_inflight_versions[chunk] = version
         self._chunk_mesh_requeue_after[chunk] = time.perf_counter() + self.CHUNK_REBUILD_REQUEUE_COOLDOWN_SECONDS
@@ -788,7 +812,7 @@ class World:
                 if old is not None:
                     old.delete()
                 continue
-            mesh_data = self.renderer.build_chunk_mesh_data(positions, block_sample, SOLID_BLOCKS)
+            mesh_data = self.renderer.build_chunk_mesh_data(positions, block_sample, OCCLUDING_BLOCKS)
             self._upload_chunk_mesh(chunk, mesh_data)
             self._dirty_chunks.discard(chunk)
 
@@ -908,6 +932,107 @@ class World:
         if noise < self.PLAINS_SANDSTONE_NOISE_THRESHOLD and y < self.PLAINS_SANDSTONE_MAX_Y:
             return "sandstone"
         return "stone"
+
+    def _place_tree(
+        self,
+        block_map: dict[Vec3, str],
+        x: int,
+        surface_y: int,
+        z: int,
+        trunk_height: int,
+        canopy_radius: int,
+    ) -> None:
+        trunk_top = surface_y + trunk_height
+        for y in range(surface_y + 1, trunk_top + 1):
+            block_map[(x, y, z)] = "oak_log"
+
+        canopy_bottom = trunk_top - 1
+        canopy_top = trunk_top + 2
+        for y in range(canopy_bottom, canopy_top + 1):
+            dy = y - trunk_top
+            if dy <= 0:
+                radius = canopy_radius
+            elif dy == 1:
+                radius = max(1, canopy_radius - 1)
+            else:
+                radius = 1
+            for dx in range(-radius, radius + 1):
+                for dz in range(-radius, radius + 1):
+                    if abs(dx) == radius and abs(dz) == radius and y < canopy_top:
+                        continue
+                    px = x + dx
+                    pz = z + dz
+                    pos = (px, y, pz)
+                    if pos in block_map and block_map[pos] == "oak_log":
+                        continue
+                    if pos not in block_map:
+                        block_map[pos] = "oak_leaves"
+
+    def _place_trees_in_chunk(
+        self,
+        block_map: dict[Vec3, str],
+        column_meta: list[tuple[int, str]],
+        cx: int,
+        cy: int,
+        cz: int,
+        x0: int,
+        x1: int,
+        y1: int,
+        z0: int,
+        z1: int,
+    ) -> None:
+        if not self.TREE_ENABLED:
+            return
+        if cy != self.VERTICAL_CHUNKS - 1:
+            return
+
+        radius = max(1, self.TREE_CANOPY_RADIUS)
+        min_x = x0 + radius
+        max_x = x1 - radius - 1
+        min_z = z0 + radius
+        max_z = z1 - radius - 1
+        if min_x > max_x or min_z > max_z:
+            return
+
+        seed = (
+            (self.seed * 6364136223846793005)
+            ^ (cx * 1442695040888963407)
+            ^ (cz * 22695477)
+            ^ (cy * 1103515245)
+        ) & 0xFFFFFFFFFFFFFFFF
+        rng = random.Random(seed)
+        trunks: list[tuple[int, int]] = []
+        attempts = max(0, self.TREE_ATTEMPTS_PER_CHUNK)
+        for _ in range(attempts):
+            if rng.random() > self.TREE_CHANCE_PER_ATTEMPT:
+                continue
+            x = rng.randint(min_x, max_x)
+            z = rng.randint(min_z, max_z)
+            if any(abs(x - tx) + abs(z - tz) < self.TREE_MIN_SPACING for tx, tz in trunks):
+                continue
+
+            lx = x - x0
+            lz = z - z0
+            h, biome_id = column_meta[lx * self.CHUNK_SIZE + lz]
+            if biome_id != "plains":
+                continue
+            if h >= y1 - (self.TREE_MAX_TRUNK_HEIGHT + radius + 2):
+                continue
+            if block_map.get((x, h, z)) != "grass":
+                continue
+
+            trunk_height = rng.randint(self.TREE_MIN_TRUNK_HEIGHT, self.TREE_MAX_TRUNK_HEIGHT)
+            clear_top = h + trunk_height + radius + 1
+            obstructed = False
+            for y in range(h + 1, clear_top + 1):
+                if (x, y, z) in block_map:
+                    obstructed = True
+                    break
+            if obstructed:
+                continue
+
+            self._place_tree(block_map, x, h, z, trunk_height, radius)
+            trunks.append((x, z))
 
     def _generate_chunk_data(self, chunk: tuple[int, int, int]) -> list[tuple[Vec3, str]]:
         cx, cy, cz = chunk
@@ -1029,6 +1154,8 @@ class World:
                             continue
                         if current in replace_sets[rule_idx]:
                             block_map[pos] = ore_blocks[rule_idx]
+
+        self._place_trees_in_chunk(block_map, column_meta, cx, cy, cz, x0, x1, y1, z0, z1)
 
         data.extend(block_map.items())
         return data

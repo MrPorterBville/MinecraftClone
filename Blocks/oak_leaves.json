@@ -1,0 +1,10 @@
+{
+  "name": "oak_leaves",
+  "solid": true,
+  "occludes": false,
+  "breakable": true,
+  "color": [0.32, 0.68, 0.30],
+  "textures": {
+    "all": "leaves.png"
+  }
+}

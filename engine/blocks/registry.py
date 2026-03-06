@@ -7,6 +7,7 @@ from pathlib import Path
 class BlockDefinition:
     name: str
     solid: bool
+    occludes: bool
     breakable: bool
     color: tuple[float, float, float]
     # index 0:+X, 1:-X, 2:+Y, 3:-Y, 4:+Z, 5:-Z
@@ -23,6 +24,7 @@ def _load_block_json(path: Path) -> BlockDefinition:
     # Normalize name and properties
     name = data.get("name", path.stem)
     solid = data.get("solid", True)
+    occludes = data.get("occludes", solid)
     breakable = data.get("breakable", True)
     
     raw_color = data.get("color", [1.0, 0.0, 1.0])
@@ -54,6 +56,7 @@ def _load_block_json(path: Path) -> BlockDefinition:
     return BlockDefinition(
         name=name,
         solid=solid,
+        occludes=occludes,
         breakable=breakable,
         color=color,
         face_textures=face_map
@@ -86,6 +89,7 @@ def load_block_definitions() -> dict[str, BlockDefinition]:
 # --- Registry Initialization ---
 BLOCKS = load_block_definitions()
 SOLID_BLOCKS = {name.lower() for name, block in BLOCKS.items() if block.solid}
+OCCLUDING_BLOCKS = {name.lower() for name, block in BLOCKS.items() if block.occludes}
 #print(f"Registry initialized. Loaded {len(BLOCKS)} blocks. Solid blocks: {SOLID_BLOCKS}")
 
 # --- Helper Functions for the Renderer ---

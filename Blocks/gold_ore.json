@@ -3,7 +3,5 @@
   "solid": true,
   "breakable": true,
   "color": [0.90, 0.78, 0.28],
-  "textures": {
-    "all": null
-  }
+  "textures": "gold_ore.png"
 }

@@ -143,6 +143,31 @@ void main()
         v = max(1, value)
         return 1 << (v - 1).bit_length()
 
+    @staticmethod
+    def _should_alpha_key(texture_name: str) -> bool:
+        name = texture_name.lower()
+        return "leaves" in name
+
+    def _load_texture_image(self, texture_name: str) -> pyglet.image.AbstractImage | None:
+        texture_path = TEXTURES_DIR / texture_name
+        if not texture_path.is_file():
+            return None
+        image = pyglet.image.load(str(texture_path))
+        if not self._should_alpha_key(texture_name):
+            return image
+
+        # Foliage textures should behave like cutout alpha (Minecraft-style).
+        image_data = image.get_image_data()
+        rgba = bytearray(image_data.get_data("BGRA", image.width * 4))
+        for i in range(0, len(rgba), 4):
+            a = rgba[i + 3]
+            if a < 250:
+                rgba[i] = 0
+                rgba[i + 1] = 0
+                rgba[i + 2] = 0
+                rgba[i + 3] = 0
+        return pyglet.image.ImageData(image.width, image.height, "BGRA", bytes(rgba), pitch=image.width * 4)
+
     def _build_texture_atlas(self) -> None:
         texture_names: set[str] = set()
         for definition in BLOCKS.values():
@@ -155,10 +180,9 @@ void main()
 
         images: dict[str, pyglet.image.AbstractImage] = {}
         for texture_name in sorted(texture_names):
-            texture_path = TEXTURES_DIR / texture_name
-            if not texture_path.is_file():
+            img = self._load_texture_image(texture_name)
+            if img is None:
                 continue
-            img = pyglet.image.load(str(texture_path))
             if img.width != self.ATLAS_TILE_SIZE or img.height != self.ATLAS_TILE_SIZE:
                 raise ValueError(
                     f"Texture '{texture_name}' must be {self.ATLAS_TILE_SIZE}x{self.ATLAS_TILE_SIZE}, "
@@ -290,10 +314,10 @@ void main()
 
         texture = self._texture_cache.get(texture_name)
         if texture is None:
-            texture_path = TEXTURES_DIR / texture_name
-            if not texture_path.is_file():
+            image = self._load_texture_image(texture_name)
+            if image is None:
                 return None
-            texture = pyglet.image.load(str(texture_path)).get_texture()
+            texture = image.get_texture()
             gl.glBindTexture(texture.target, texture.id)
             gl.glTexParameteri(texture.target, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST)
             gl.glTexParameteri(texture.target, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)
@@ -314,10 +338,9 @@ void main()
 
         images: dict[str, pyglet.image.AbstractImage] = {}
         for texture_name in sorted(texture_names):
-            texture_path = TEXTURES_DIR / texture_name
-            if not texture_path.is_file():
+            image = self._load_texture_image(texture_name)
+            if image is None:
                 continue
-            image = pyglet.image.load(str(texture_path))
             if image.width != self.ATLAS_TILE_SIZE or image.height != self.ATLAS_TILE_SIZE:
                 raise ValueError(
                     f"Texture '{texture_name}' must be {self.ATLAS_TILE_SIZE}x{self.ATLAS_TILE_SIZE}, "

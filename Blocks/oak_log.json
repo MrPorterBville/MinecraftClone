@@ -1,0 +1,11 @@
+{
+  "name": "oak_log",
+  "solid": true,
+  "breakable": true,
+  "color": [0.60, 0.45, 0.30],
+  "textures": {
+    "side": "oak_wood_log.png",
+    "top": "oak_wood_end.png",
+    "bottom": "oak_wood_end.png"
+  }
+}

@@ -3,7 +3,5 @@
   "solid": true,
   "breakable": true,
   "color": [0.78, 0.62, 0.48],
-  "textures": {
-    "all": null
-  }
+  "textures": "iron_ore.png"
 }
