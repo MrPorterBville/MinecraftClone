@@ -1360,9 +1360,12 @@ fn build_chunk_mesh_data_native(
         let Some(block) = blocks.get(&(x, y, z)) else {
             continue;
         };
+        if block == "water" && blocks.contains_key(&(x, y + 1, z)) {
+            continue;
+        }
         for (face_index, (dx, dy, dz)) in face_offsets.iter().enumerate() {
             if let Some(neighbor) = blocks.get(&(x + dx, y + dy, z + dz)) {
-                if solid_blocks.contains(neighbor) {
+                if solid_blocks.contains(neighbor) || (block == "water" && neighbor == "water") {
                     continue;
                 }
             }
