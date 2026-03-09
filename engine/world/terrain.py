@@ -48,7 +48,19 @@ class TerrainGenerator:
 
     @staticmethod
     def biome_from_noise(noise: float) -> str:
-        return "desert" if noise < 0.0 else "plains"
+        if noise < -0.35:
+            return "desert"
+        if noise < 0.2:
+            return "plains"
+        if noise < 0.55:
+            return "forest"
+        return "mountains"
+
+
+    def river_noise_at(self, x: int, z: int) -> float:
+        base = self.biome_noise_at(x, z)
+        detail = self.biome_noise_at(x + 9876, z - 5432)
+        return 0.7 * base + 0.3 * detail
 
     def cave_noise_at(self, x: int, y: int, z: int) -> float:
         return float(self._native.cave_noise_at(x, y, z))

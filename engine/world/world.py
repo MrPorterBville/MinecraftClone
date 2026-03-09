@@ -85,6 +85,10 @@ _WORLD_GEN_DEFAULTS: dict[str, int | float | bool] = {
     "BIOME_BLEND_NOISE_MIN": -0.25,
     "BIOME_BLEND_NOISE_MAX": 0.25,
     "TOP_LAYER_DEPTH": 2,
+    "SEA_LEVEL": 62,
+    "RIVER_WIDTH_THRESHOLD": 0.06,
+    "RIVER_MAX_DEPTH": 5,
+    "RIVER_MIN_DEPTH": 2,
     "DESERT_SANDSTONE_HIGH_NOISE_THRESHOLD": 0.35,
     "DESERT_SANDSTONE_LOW_Y_MAX": 22,
     "DESERT_SANDSTONE_LOW_NOISE_THRESHOLD": -0.45,
@@ -174,6 +178,10 @@ _WORLD_GEN_SECTIONS: dict[str, tuple[str, ...]] = {
         "BIOME_BLEND_NOISE_MIN",
         "BIOME_BLEND_NOISE_MAX",
         "TOP_LAYER_DEPTH",
+        "SEA_LEVEL",
+        "RIVER_WIDTH_THRESHOLD",
+        "RIVER_MAX_DEPTH",
+        "RIVER_MIN_DEPTH",
     ),
     "materials": (
         "DESERT_SANDSTONE_HIGH_NOISE_THRESHOLD",
@@ -408,6 +416,10 @@ class World:
     BIOME_BLEND_NOISE_MIN = float(_WORLD_SETTINGS["BIOME_BLEND_NOISE_MIN"])
     BIOME_BLEND_NOISE_MAX = float(_WORLD_SETTINGS["BIOME_BLEND_NOISE_MAX"])
     TOP_LAYER_DEPTH = int(_WORLD_SETTINGS["TOP_LAYER_DEPTH"])
+    SEA_LEVEL = int(_WORLD_SETTINGS["SEA_LEVEL"])
+    RIVER_WIDTH_THRESHOLD = float(_WORLD_SETTINGS["RIVER_WIDTH_THRESHOLD"])
+    RIVER_MAX_DEPTH = int(_WORLD_SETTINGS["RIVER_MAX_DEPTH"])
+    RIVER_MIN_DEPTH = int(_WORLD_SETTINGS["RIVER_MIN_DEPTH"])
     DESERT_SANDSTONE_HIGH_NOISE_THRESHOLD = float(_WORLD_SETTINGS["DESERT_SANDSTONE_HIGH_NOISE_THRESHOLD"])
     DESERT_SANDSTONE_LOW_Y_MAX = int(_WORLD_SETTINGS["DESERT_SANDSTONE_LOW_Y_MAX"])
     DESERT_SANDSTONE_LOW_NOISE_THRESHOLD = float(_WORLD_SETTINGS["DESERT_SANDSTONE_LOW_NOISE_THRESHOLD"])
@@ -821,11 +833,10 @@ class World:
         depth = float(biome_json.get("depth", 0.1))
         scale = float(biome_json.get("scale", 0.05))
 
+        # Preserve smooth transitions for the original desert/plains border.
         desert = self.biomes_data.get("desert")
         plains = self.biomes_data.get("plains")
-        if desert is not None and plains is not None:
-            # Blend biome terrain parameters around biome borders so there are
-            # no abrupt terrain-step cliffs when biome IDs switch.
+        if biome in {"desert", "plains"} and desert is not None and plains is not None:
             if biome_noise is None:
                 biome_noise = self.terrain.biome_noise_at(x, z)
             blend = self._smoothstep(self.BIOME_BLEND_NOISE_MIN, self.BIOME_BLEND_NOISE_MAX, biome_noise)
@@ -860,6 +871,11 @@ class World:
                 return "sand"
             if y >= h - self.TOP_LAYER_DEPTH:
                 return "sandstone"
+        elif biome == "mountains":
+            if y == h:
+                return "stone"
+            if y >= h - self.TOP_LAYER_DEPTH:
+                return "stone"
         else:
             if y == h:
                 return "grass"
@@ -925,6 +941,14 @@ class World:
                 return "sandstone"
             if y < self.DESERT_SANDSTONE_LOW_Y_MAX and noise < self.DESERT_SANDSTONE_LOW_NOISE_THRESHOLD:
                 return "sandstone"
+            return "stone"
+
+        if biome == "mountains":
+            return "stone"
+
+        if biome == "forest":
+            if noise > self.PLAINS_DIRT_NOISE_THRESHOLD - 0.08 and y > self.PLAINS_DIRT_MIN_Y - 2:
+                return "dirt"
             return "stone"
 
         if noise > self.PLAINS_DIRT_NOISE_THRESHOLD and y > self.PLAINS_DIRT_MIN_Y:
@@ -1014,7 +1038,7 @@ class World:
             lx = x - x0
             lz = z - z0
             h, biome_id = column_meta[lx * self.CHUNK_SIZE + lz]
-            if biome_id != "plains":
+            if biome_id not in {"plains", "forest"}:
                 continue
             if h >= y1 - (self.TREE_MAX_TRUNK_HEIGHT + radius + 2):
                 continue
@@ -1046,6 +1070,7 @@ class World:
         data: list[tuple[Vec3, str]] = []
         surface_heights = [0] * (self.CHUNK_SIZE * self.CHUNK_SIZE)
         column_meta: list[tuple[int, str]] = [(0, "plains")] * (self.CHUNK_SIZE * self.CHUNK_SIZE)
+        river_columns = [False] * (self.CHUNK_SIZE * self.CHUNK_SIZE)
 
         block_map: dict[Vec3, str] = {}
         for x in range(x0, x1):
@@ -1056,6 +1081,16 @@ class World:
                 biome_noise = self.terrain.biome_noise_at(x, z)
                 biome_id = self.terrain.biome_from_noise(biome_noise)
                 h = self.height_at(x, z, biome_id, biome_noise=biome_noise)
+
+                river_noise = self.terrain.river_noise_at(x, z)
+                if abs(river_noise) < self.RIVER_WIDTH_THRESHOLD:
+                    river_columns[idx] = True
+                    river_ratio = 1.0 - (abs(river_noise) / max(1e-6, self.RIVER_WIDTH_THRESHOLD))
+                    river_depth = int(round(self.RIVER_MIN_DEPTH + river_ratio * (self.RIVER_MAX_DEPTH - self.RIVER_MIN_DEPTH)))
+                    river_depth = max(self.RIVER_MIN_DEPTH, min(self.RIVER_MAX_DEPTH, river_depth))
+                    river_bed = min(h, self.SEA_LEVEL - 1) - river_depth
+                    h = max(self.BEDROCK_Y + 1, river_bed)
+
                 surface_heights[idx] = h
                 column_meta[idx] = (h, biome_id)
 
@@ -1107,6 +1142,11 @@ class World:
                             block = "sandstone"
                         else:
                             block = self._underground_block_at(x, y, z, biome_id)
+                    elif biome_id == "mountains":
+                        if y == h or y >= h - self.TOP_LAYER_DEPTH:
+                            block = "stone"
+                        else:
+                            block = self._underground_block_at(x, y, z, biome_id)
                     else:
                         if y == h:
                             block = "grass"
@@ -1115,6 +1155,14 @@ class World:
                         else:
                             block = self._underground_block_at(x, y, z, biome_id)
                     block_map[(x, y, z)] = block
+
+                if h < self.SEA_LEVEL and (river_columns[idx] or h < self.SEA_LEVEL - 1):
+                    water_start = max(h + 1, y0)
+                    water_end = min(self.SEA_LEVEL, y1)
+                    for wy in range(water_start, water_end + 1):
+                        pos = (x, wy, z)
+                        if pos not in block_map:
+                            block_map[pos] = "water"
 
         active_rules = [r for r in self._ore_rules if bool(r.get("enabled", True))]
         if active_rules:

@@ -1,74 +1,66 @@
 {
-    "plains": {
-        "type": "minecraft:plains_biome",
-        "category": "plains",
-        "precipitation": "rain",
-        "depth": 0.125,
-        "scale": 0.05,
-        "temperature": 0.8,
-        "downfall": 0.4,
-        "effects": {
-            "sky_color": 7907327,
-            "fog_color": 12638463,
-            "water_color": 4159204,
-            "water_fog_color": 329011
-        },
-        "spawners": {
-            "creature": [
-            {
-                "type": "minecraft:sheep",
-                "weight": 12,
-                "minCount": 2,
-                "maxCount": 4
-            },
-            {
-                "type": "minecraft:cow",
-                "weight": 10,
-                "minCount": 2,
-                "maxCount": 3
-            }
-            ]
-        },
-        "features": [
-            "minecraft:grass",
-            "minecraft:trees"
-        ]
+  "plains": {
+    "type": "minecraft:plains_biome",
+    "category": "plains",
+    "precipitation": "rain",
+    "depth": 0.125,
+    "scale": 0.05,
+    "temperature": 0.8,
+    "downfall": 0.4,
+    "effects": {
+      "sky_color": 7907327,
+      "fog_color": 12638463,
+      "water_color": 4159204,
+      "water_fog_color": 329011
     },
-
-    "desert": {
+    "features": ["minecraft:grass", "minecraft:trees"]
+  },
+  "desert": {
     "type": "minecraft:desert_biome",
     "category": "desert",
     "precipitation": "none",
     "depth": 0.025,
     "scale": 0.05,
-    "temperature": 0.8,
-    "downfall": 0.4,
+    "temperature": 1.9,
+    "downfall": 0.0,
     "effects": {
-        "sky_color": 7907327,
-        "fog_color": 12638463,
-        "water_color": 4159204,
-        "water_fog_color": 329011
+      "sky_color": 7907327,
+      "fog_color": 12638463,
+      "water_color": 4159204,
+      "water_fog_color": 329011
     },
-    "spawners": {
-        "creature": [
-        {
-            "type": "minecraft:sheep",
-            "weight": 12,
-            "minCount": 2,
-            "maxCount": 4
-        },
-        {
-            "type": "minecraft:cow",
-            "weight": 10,
-            "minCount": 2,
-            "maxCount": 3
-        }
-        ]
+    "features": ["minecraft:sand"]
+  },
+  "forest": {
+    "type": "minecraft:forest_biome",
+    "category": "forest",
+    "precipitation": "rain",
+    "depth": 0.16,
+    "scale": 0.08,
+    "temperature": 0.7,
+    "downfall": 0.8,
+    "effects": {
+      "sky_color": 7972607,
+      "fog_color": 12638463,
+      "water_color": 4159204,
+      "water_fog_color": 329011
     },
-    "features": [
-        "minecraft:grass",
-        "minecraft:trees"
-    ]
-    }
-
+    "features": ["minecraft:grass", "minecraft:trees", "minecraft:tall_grass"]
+  },
+  "mountains": {
+    "type": "minecraft:mountains_biome",
+    "category": "extreme_hills",
+    "precipitation": "rain",
+    "depth": 1.0,
+    "scale": 0.5,
+    "temperature": 0.2,
+    "downfall": 0.3,
+    "effects": {
+      "sky_color": 8233983,
+      "fog_color": 12638463,
+      "water_color": 4020182,
+      "water_fog_color": 329011
+    },
+    "features": ["minecraft:stone_peaks"]
+  }
 }
