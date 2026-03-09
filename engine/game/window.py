@@ -19,6 +19,9 @@ class GameWindow(pyglet.window.Window):
     CHUNK_STREAM_UPDATE_INTERVAL_OVER_CAP_SECONDS = 1.0 / 8.0
     FRAME_CATCHUP_THRESHOLD_MS = 20.0
     LOADING_REQUIRED_RADIUS_CHUNKS = 1
+    WATER_GRAVITY_SCALE = 0.2
+    WATER_TERMINAL_VELOCITY = 6.0
+    SWIM_UP_SPEED = 4.5
 
     def __init__(self, seed: int = 90125, use_texture_array: bool = False):
         super().__init__(width=1280, height=720, caption="Python Minecraft Clone", resizable=True)
@@ -238,8 +241,15 @@ class GameWindow(pyglet.window.Window):
                 dx, dy, dz = dx * d, dy * d, dz * d
 
                 with self.profiler.section("update.physics"):
-                    self.dy -= step_dt * GRAVITY
-                    self.dy = max(self.dy, -TERMINAL_VELOCITY)
+                    in_water = self._is_in_water(self.position)
+                    if in_water:
+                        self.dy -= step_dt * GRAVITY * self.WATER_GRAVITY_SCALE
+                        if self.keys[key.SPACE]:
+                            self.dy = self.SWIM_UP_SPEED
+                        self.dy = max(self.dy, -self.WATER_TERMINAL_VELOCITY)
+                    else:
+                        self.dy -= step_dt * GRAVITY
+                        self.dy = max(self.dy, -TERMINAL_VELOCITY)
                     dy += self.dy * step_dt
 
                 x, y, z = self.position
@@ -304,6 +314,13 @@ class GameWindow(pyglet.window.Window):
         px, py, pz = self.world.normalize(self.position)
         return {(px, py - dy, pz) for dy in range(PLAYER_HEIGHT)}
 
+    def _is_in_water(self, position: tuple[float, float, float]) -> bool:
+        px, py, pz = self.world.normalize(position)
+        for dy in range(PLAYER_HEIGHT):
+            if self.world.blocks.get((px, py - dy, pz)) == "water":
+                return True
+        return False
+
     def _inventory_slot_at(self, x: float, y: float) -> int | None:
         for i, bg in enumerate(self._inventory_backgrounds):
             if bg.x <= x <= bg.x + bg.width and bg.y <= y <= bg.y + bg.height:
@@ -358,7 +375,7 @@ class GameWindow(pyglet.window.Window):
             return
 
         vector = self.get_sight_vector()
-        block, previous = self.world.hit_test(self.position, vector)
+        block, previous = self.world.hit_test(self.position, vector, ignore_blocks={"water"})
         if button == mouse.RIGHT and previous:
             if previous in self._player_occupied_blocks():
                 return
@@ -424,8 +441,11 @@ class GameWindow(pyglet.window.Window):
         if self.inventory_open:
             return
 
-        if symbol == key.SPACE and self.dy == 0:
-            self.dy = JUMP_SPEED
+        if symbol == key.SPACE:
+            if self._is_in_water(self.position):
+                self.dy = self.SWIM_UP_SPEED
+            elif self.dy == 0:
+                self.dy = JUMP_SPEED
         elif key._1 <= symbol < key._1 + self.inventory.HOTBAR_SIZE:
             self.inventory.selected = symbol - key._1
 

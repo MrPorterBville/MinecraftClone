@@ -1583,6 +1583,9 @@ class World:
 
     def visible_faces(self, position: Vec3) -> list[int]:
         x, y, z = position
+        block = self.blocks.get(position)
+        if block == "water" and self.blocks.get((x, y + 1, z)) is not None:
+            return []
         visible: list[int] = []
         for face_index, (dx, dy, dz) in enumerate(self._FACE_NEIGHBORS):
             n = (x + dx, y + dy, z + dz)
@@ -1607,14 +1610,22 @@ class World:
         self._process_dirty_chunks(len(self._dirty_chunks), 0.0)
         self._drain_completed_meshes(len(self._loaded_chunks), 0.0)
 
-    def hit_test(self, position: tuple[float, float, float], vector: tuple[float, float, float], max_distance: int = 8):
+    def hit_test(
+        self,
+        position: tuple[float, float, float],
+        vector: tuple[float, float, float],
+        max_distance: int = 8,
+        ignore_blocks: set[str] | None = None,
+    ):
         m = 12
         x, y, z = position
         dx, dy, dz = vector
         previous = None
+        ignored = ignore_blocks or set()
         for _ in range(max_distance * m):
             key_pos = self.normalize((x, y, z))
-            if key_pos != previous and key_pos in self.blocks:
+            block = self.blocks.get(key_pos)
+            if key_pos != previous and block is not None and block not in ignored:
                 return key_pos, previous
             previous = key_pos
             x, y, z = x + dx / m, y + dy / m, z + dz / m

@@ -613,8 +613,11 @@ void main()
             block = blocks.get((x, y, z))
             if block is None:
                 continue
+            if block == "water" and blocks.get((x, y + 1, z)) is not None:
+                continue
             for face_index, (dx, dy, dz) in enumerate(face_offsets):
-                if blocks.get((x + dx, y + dy, z + dz)) in solid_blocks:
+                neighbor = blocks.get((x + dx, y + dy, z + dz))
+                if neighbor in solid_blocks or (block == "water" and neighbor == "water"):
                     continue
                 plane, u, v = self._face_cell(face_index, x, y, z)
                 cells = face_planes[face_index].setdefault(plane, {})
