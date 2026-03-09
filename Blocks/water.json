@@ -1,0 +1,8 @@
+{
+  "name": "water",
+  "solid": false,
+  "occludes": false,
+  "breakable": false,
+  "color": [0.2, 0.4, 0.9],
+  "textures": {}
+}

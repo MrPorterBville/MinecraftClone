@@ -71,7 +71,11 @@
   "biomes": {
     "BIOME_BLEND_NOISE_MIN": -0.25,
     "BIOME_BLEND_NOISE_MAX": 0.25,
-    "TOP_LAYER_DEPTH": 2
+    "TOP_LAYER_DEPTH": 2,
+    "SEA_LEVEL": 62,
+    "RIVER_WIDTH_THRESHOLD": 0.06,
+    "RIVER_MAX_DEPTH": 5,
+    "RIVER_MIN_DEPTH": 2
   },
   "materials": {
     "DESERT_SANDSTONE_HIGH_NOISE_THRESHOLD": 0.35,
